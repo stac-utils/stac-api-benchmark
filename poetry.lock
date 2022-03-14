@@ -646,14 +646,14 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "reorder-python-imports"
-version = "2.8.0"
+version = "3.0.1"
 description = "Tool for reordering python imports"
 category = "dev"
 optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
-"aspy.refactor-imports" = ">=2.3.0,<3"
+"aspy.refactor-imports" = ">=2.3.0"
 
 [[package]]
 name = "requests"
@@ -1001,7 +1001,7 @@ tests = ["codecov", "scikit-build", "cmake", "ninja", "pybind11", "pytest", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "9caf176ba59df96ad52ab3f52ff6df0fbec046aa60f6f0d582151a5caf38a397"
+content-hash = "2ef269da3c171badad782483eb429793ea73cfc76b3e9e5aa51a77a06f018ea2"
 
 [metadata.files]
 alabaster = [
@@ -1386,8 +1386,8 @@ pyyaml = [
     {file = "PyYAML-6.0.tar.gz", hash = "sha256:68fb519c14306fec9720a2a5b45bc9f0c8d1b9c72adf45c37baedfcd949c35a2"},
 ]
 reorder-python-imports = [
-    {file = "reorder_python_imports-2.8.0-py2.py3-none-any.whl", hash = "sha256:03354608c610a25cba75a352ad86552849dcf3c90849fcb415298efc911a4ecf"},
-    {file = "reorder_python_imports-2.8.0.tar.gz", hash = "sha256:435af2a6feb39de3c4b7a415079f85b4b0052d3a7ed9ea7b269b0aff725abdaf"},
+    {file = "reorder_python_imports-3.0.1-py2.py3-none-any.whl", hash = "sha256:4a87d5ffdd5f34b29040fd8c9dae375b5f74ade9f5ec7b15cbcc3dc6a3117855"},
+    {file = "reorder_python_imports-3.0.1.tar.gz", hash = "sha256:a4e1c28a1bf90a7c8fa4c534058803a7956adc722137d3e54eb91536fe12ffb6"},
 ]
 requests = [
     {file = "requests-2.27.1-py2.py3-none-any.whl", hash = "sha256:f22fa1e554c9ddfd16e6e41ac79759e17be9e492b3587efa038054674760e72d"},
