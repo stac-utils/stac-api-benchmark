@@ -1,0 +1,12 @@
+{
+  "_template": "gh:cjolowicz/cookiecutter-hypermodern-python",
+  "author": "Phil Varner",
+  "development_status": "Development Status :: 1 - Planning",
+  "email": "pvarner@element84.com",
+  "friendly_name": "STAC API Benchmark",
+  "github_user": "philvarner",
+  "license": "Apache-2.0",
+  "package_name": "stac_api_benchmark",
+  "project_name": "stac-api-benchmark",
+  "version": "0.1.0"
+}

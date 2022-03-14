@@ -1,3 +1,0 @@
-# STAC API Benchmark
-
-WIP
