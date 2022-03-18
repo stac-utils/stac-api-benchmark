@@ -19,12 +19,14 @@ Changelog = "https://github.com/philvarner/stac-api-benchmark/releases"
 python = "^3.10"
 click = "^8.0.1"
 Expression = "^2.0.0"
+pystac-client = "^0.3.2"
+types-requests = "^2.27.13"
 
 [tool.poetry.dev-dependencies]
-pytest = "^7.1.0"
+pytest = "^7.1.1"
 coverage = {extras = ["toml"], version = "^6.1"}
 safety = "^1.10.3"
-mypy = "^0.940"
+mypy = "^0.941"
 typeguard = "^2.13.2"
 xdoctest = {extras = ["colors"], version = "^0.15.10"}
 sphinx = "^4.3.0"
@@ -67,6 +69,7 @@ pretty = true
 show_column_numbers = true
 show_error_codes = true
 show_error_context = true
+ignore_missing_imports = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
