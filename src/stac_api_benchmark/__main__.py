@@ -56,10 +56,11 @@ def _request_item_repeatedly(url: str, collection: str, times: int, workers: int
 
 def _request_point_with_no_results(url: str, collection: str, times: int, workers: int):
     def search_with_query_that_has_no_results() -> None:
-        _ = requests.get(url=f"{url}/search", params={
-            "collections": collection,
-            "bbox": "-179,85,-178,89"
-        }, timeout=10).text
+        _ = requests.get(
+            url=f"{url}/search",
+            params={"collections": collection, "bbox": "-179,85,-178,89"},
+            timeout=10,
+        ).text
 
     t_start = perf_counter()
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
