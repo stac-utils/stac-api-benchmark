@@ -985,7 +985,7 @@ test = ["pytest", "typing-extensions", "mypy"]
 name = "types-requests"
 version = "2.27.13"
 description = "Typing stubs for requests"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -996,7 +996,7 @@ types-urllib3 = "<1.27"
 name = "types-urllib3"
 version = "1.26.11"
 description = "Typing stubs for urllib3"
-category = "dev"
+category = "main"
 optional = false
 python-versions = "*"
 
@@ -1062,7 +1062,7 @@ tests = ["codecov", "scikit-build", "cmake", "ninja", "pybind11", "pytest", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "55b601b2abf5a6656c0e245c193a35cbb7fd6715e7c7425474f4977ae0a3e4ef"
+content-hash = "8916a5a32ee82e6be1b257fdc5b3e6131dfbe61e892be4e6a4645c17d0a5ab55"
 
 [metadata.files]
 alabaster = [
