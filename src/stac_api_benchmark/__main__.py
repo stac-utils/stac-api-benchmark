@@ -9,7 +9,8 @@ import requests
 from pystac import Item
 from pystac_client import Client
 from pystac_client.exceptions import APIError
-from src.stac_api_benchmark import query
+
+from stac_api_benchmark import query
 
 
 @click.command()
@@ -18,24 +19,26 @@ from src.stac_api_benchmark import query
 @click.option("--collection", help="The collection to operate on")
 def main(url: str, collection: str) -> None:
     """STAC API Benchmark."""
-    result = _search_with_fc(url, collection, query.STEP)
-    print(f"STEP: {result[0]} {result[1]:02f}")
+    result1 = _search_with_fc(url, collection, query.STEP)
+    print(f"STEP: {result1[0]} {result1[1]:02f}")
 
-    result = _search_with_fc(url, collection, query.TNC_ECOREGIONS)
-    print(f"TNC: {result[0]} {result[1]:02f}")
+    result2 = _search_with_fc(url, collection, query.TNC_ECOREGIONS)
+    print(f"TNC: {result2[0]} {result2[1]:02f}")
 
-    result = _request_item_repeatedly(url, collection, times=1000, workers=50)
-    print(f"Repeated: {result:02f}")
+    result3 = _request_item_repeatedly(url, collection, times=1000, workers=50)
+    print(f"Repeated: {result3:02f}")
 
-    result = _request_point_with_no_results(url, collection, times=1000, workers=50)
-    print(f"No results: {result:02f}")
+    result4 = _request_point_with_no_results(url, collection, times=1000, workers=50)
+    print(f"No results: {result4:02f}")
 
 
 def _get_link_by_rel(item: Item, rel: str) -> str:
     return next(filter(lambda x: x.rel == rel, item.links)).href
 
 
-def _request_item_repeatedly(url: str, collection: str, times: int, workers: int):
+def _request_item_repeatedly(
+    url: str, collection: str, times: int, workers: int
+) -> float:
     catalog = Client.open(url)
     item = next(catalog.search(collections=[collection], max_items=1).get_items())
     item_url = _get_link_by_rel(item, "self")
@@ -54,7 +57,9 @@ def _request_item_repeatedly(url: str, collection: str, times: int, workers: int
     return perf_counter() - t_start
 
 
-def _request_point_with_no_results(url: str, collection: str, times: int, workers: int):
+def _request_point_with_no_results(
+    url: str, collection: str, times: int, workers: int
+) -> float:
     def search_with_query_that_has_no_results() -> None:
         _ = requests.get(
             url=f"{url}/search",

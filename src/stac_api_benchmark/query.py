@@ -15,15 +15,14 @@ def load_geometries(filename: str) -> List[Dict[str, Any]]:
     return _geometries_from(_load_geojson(filename))
 
 
-def _load_geojson(filename: str) -> Dict[str, Any]:
+def _load_geojson(filename: str) -> Any:
     if filename.endswith(".zip"):
         with importlib.resources.path("geojson", filename) as f:
             with ZipFile(f) as zf:
                 with zf.open(zf.infolist()[0]) as fo:
-                    content = fo.read()
+                    return json.loads(fo.read())
     else:
-        content = importlib.resources.read_text("geojson", filename)
-    return json.loads(content)
+        return json.loads(importlib.resources.read_text("geojson", filename))
 
 
 def _geometries_from(geojson: Dict[str, Any]) -> List[Dict[str, Any]]:
