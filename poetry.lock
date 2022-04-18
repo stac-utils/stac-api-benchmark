@@ -983,7 +983,7 @@ test = ["pytest", "typing-extensions", "mypy"]
 
 [[package]]
 name = "types-requests"
-version = "2.27.13"
+version = "2.27.19"
 description = "Typing stubs for requests"
 category = "main"
 optional = false
@@ -1062,7 +1062,7 @@ tests = ["codecov", "scikit-build", "cmake", "ninja", "pybind11", "pytest", "pyt
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "8916a5a32ee82e6be1b257fdc5b3e6131dfbe61e892be4e6a4645c17d0a5ab55"
+content-hash = "5f5fd14f2ba51180cb6dba6318857b3dc8229217d360b765c87378d362ce5977"
 
 [metadata.files]
 alabaster = [
@@ -1620,8 +1620,8 @@ typeguard = [
     {file = "typeguard-2.13.3.tar.gz", hash = "sha256:00edaa8da3a133674796cf5ea87d9f4b4c367d77476e185e80251cc13dfbb8c4"},
 ]
 types-requests = [
-    {file = "types-requests-2.27.13.tar.gz", hash = "sha256:cf0646031dd6307113b37814f743c04f0707a3357378c2bb1326f848412f5ba9"},
-    {file = "types_requests-2.27.13-py3-none-any.whl", hash = "sha256:5d6f77f3c7565659bdb7b7bce1d33d1abb7d0b056138cac714860e13da2f19df"},
+    {file = "types-requests-2.27.19.tar.gz", hash = "sha256:795e378117088d1e4bf41a2c01a153b73d6ea40aa9d7c0ac753abde84c0d3a8f"},
+    {file = "types_requests-2.27.19-py3-none-any.whl", hash = "sha256:c6c5384677d98f212516de50c4b2c38ef659b93008fbc5bb4b81726138bc8485"},
 ]
 types-urllib3 = [
     {file = "types-urllib3-1.26.11.tar.gz", hash = "sha256:24d64e441168851eb05f1d022de18ae31558f5649c8f1117e384c2e85e31315b"},

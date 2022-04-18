@@ -20,7 +20,7 @@ python = "^3.10"
 click = "^8.0.1"
 Expression = "^2.0.0"
 pystac-client = "^0.3.2"
-types-requests = "^2.27.13"
+types-requests = "^2.27.19"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.1"
