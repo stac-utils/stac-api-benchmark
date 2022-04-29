@@ -19,7 +19,7 @@ Changelog = "https://github.com/philvarner/stac-api-benchmark/releases"
 python = "^3.10"
 click = "^8.0.1"
 Expression = "^2.0.0"
-pystac-client = "^0.3.2"
+pystac-client = "^0.3.3"
 types-requests = "^2.27.13"
 
 [tool.poetry.dev-dependencies]
