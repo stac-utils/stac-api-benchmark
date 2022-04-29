@@ -599,7 +599,7 @@ diagrams = ["jinja2", "railroad-diagrams"]
 
 [[package]]
 name = "pystac"
-version = "1.2.0"
+version = "1.4.0"
 description = "Python library for working with Spatiotemporal Asset Catalog (STAC)."
 category = "main"
 optional = false
@@ -614,14 +614,14 @@ validation = ["jsonschema (>=3.0)"]
 
 [[package]]
 name = "pystac-client"
-version = "0.3.2"
+version = "0.3.3"
 description = "Python library for working with Spatiotemporal Asset Catalog (STAC)."
 category = "main"
 optional = false
 python-versions = ">=3.7"
 
 [package.dependencies]
-pystac = ">=1.2.0,<1.3.0"
+pystac = ">=1.4.0"
 requests = ">=2.25"
 
 [package.extras]
@@ -1062,7 +1062,7 @@ tests = ["cmake", "codecov", "ninja", "pybind11", "pytest-cov", "pytest-cov", "p
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "bdeefa226d8cf8e4041f28c3cb0994f6423566623b6be4e888900f767d30b614"
+content-hash = "62f8a414ca446c7e7f55ec460d7d71aae5ee6341ab9bf153d87c2eeb67b1182f"
 
 [metadata.files]
 alabaster = [
@@ -1400,12 +1400,12 @@ pyparsing = [
     {file = "pyparsing-3.0.7.tar.gz", hash = "sha256:18ee9022775d270c55187733956460083db60b37d0d0fb357445f3094eed3eea"},
 ]
 pystac = [
-    {file = "pystac-1.2.0-py3-none-any.whl", hash = "sha256:a47039e0997216d28177dfe42f74bb9297af9b0d4eb3f2aead5c27b7ee21223b"},
-    {file = "pystac-1.2.0.tar.gz", hash = "sha256:8a60be2a30e1e28f8617a88f9f8fddc00c519be494a02ec111dc8fba62bf26e7"},
+    {file = "pystac-1.4.0-py3-none-any.whl", hash = "sha256:7f4563ff7cad512fe687ceb0b09905e15934712ac936d51766b090600580abdd"},
+    {file = "pystac-1.4.0.tar.gz", hash = "sha256:6ec43e1c6bec50fbfbdede49c3ccb83ecd112072a938001b5c9c581fc2945e83"},
 ]
 pystac-client = [
-    {file = "pystac-client-0.3.2.tar.gz", hash = "sha256:82561eeb143328494786ce108f5d290adfd461fd7e3b5f6ee68751f6f6b6ec0e"},
-    {file = "pystac_client-0.3.2-py3-none-any.whl", hash = "sha256:4bd944ba41306865357ce64c5cddf1a2870449c59e32d5fed52667779ccb44f2"},
+    {file = "pystac-client-0.3.3.tar.gz", hash = "sha256:a1c07c6730ccd555cfc8915bb00e6f5aef5224cf5b00528158d204839278f614"},
+    {file = "pystac_client-0.3.3-py3-none-any.whl", hash = "sha256:6b954efbb4ac61eff6675e9eb113a7818afde111a1b87ebe66c4cb8f91306a87"},
 ]
 pytest = [
     {file = "pytest-7.1.1-py3-none-any.whl", hash = "sha256:92f723789a8fdd7180b6b06483874feca4c48a5c76968e03bb3e7f806a1869ea"},
