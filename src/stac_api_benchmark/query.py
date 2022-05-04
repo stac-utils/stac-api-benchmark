@@ -43,7 +43,7 @@ def geometries_from(
 
 
 def get_link_by_rel(item: Item, rel: str) -> str:
-    return next(filter(lambda x: x.rel == rel, item.links)).href
+    return next(filter(lambda x: x.rel == rel, item.links)).href  # type: ignore
 
 
 async def get_item_by_url(url: str, sem: Semaphore, timeout: int = 10) -> None:
@@ -105,7 +105,7 @@ async def search(
     search_id: str,
     sem: Semaphore,
     max_items: Optional[int] = None,
-    sortby: Optional[List[str]] = None,
+    sortby: Optional[List[Dict[str, str]]] = None,
 ) -> Tuple[int, float]:
     async with sem:
         try:
@@ -157,7 +157,7 @@ async def search_with_fc(
 
 
 async def sorting(
-    url: str, collection: str, concurrency: int, sortby: List[str]
+    url: str, collection: str, concurrency: int, sortby: List[Dict[str, str]]
 ) -> Tuple[List[Union[Tuple[int, float], Exception]], float]:
     sem = Semaphore(concurrency)
     t_start = perf_counter()

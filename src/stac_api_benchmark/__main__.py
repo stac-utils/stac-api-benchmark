@@ -1,5 +1,6 @@
 """Command-line interface."""
 import asyncio
+from typing import Any
 
 import click
 
@@ -17,7 +18,8 @@ def main(url: str, collection: str, concurrency: int) -> None:
 
 
 async def run(url: str, collection: str, concurrency: int) -> None:
-    result = await query.search_with_fc(
+
+    result: Any = await query.search_with_fc(
         url, collection, query.STEP, concurrency, id_field="siteid"
     )
     print(f"STEP: {result[1]:.2f}")
@@ -30,12 +32,12 @@ async def run(url: str, collection: str, concurrency: int) -> None:
     result = await query.request_item_repeatedly(
         url, collection, times=10000, concurrency=50
     )
-    print(f"Repeated: {result:02f}")
+    print(f"Repeated: {result}")
 
     result = await query.request_point_with_no_results(
         url, collection, times=1000, concurrency=50
     )
-    print(f"No results: {result:02f}")
+    print(f"No results: {result}")
 
     result = await query.sorting(
         url,
