@@ -1,99 +1,89 @@
 """Command-line interface."""
-import concurrent.futures
-from functools import reduce
-from time import perf_counter
-from typing import Tuple
+import asyncio
 
 import click
-import requests
-from pystac import Item
-from pystac_client import Client
-from pystac_client.exceptions import APIError
 
-from stac_api_benchmark import query
+from . import query
 
 
 @click.command()
 @click.version_option()
 @click.option("--url", help="The root / Landing Page url for a STAC API")
 @click.option("--collection", help="The collection to operate on")
-def main(url: str, collection: str) -> None:
+@click.option("--concurrency", default=10, help="The collection to operate on")
+def main(url: str, collection: str, concurrency: int) -> None:
     """STAC API Benchmark."""
-    result1 = _search_with_fc(url, collection, query.STEP)
-    print(f"STEP: {result1[0]} {result1[1]:02f}")
-
-    result2 = _search_with_fc(url, collection, query.TNC_ECOREGIONS)
-    print(f"TNC: {result2[0]} {result2[1]:02f}")
-
-    result3 = _request_item_repeatedly(url, collection, times=1000, workers=50)
-    print(f"Repeated: {result3:02f}")
-
-    result4 = _request_point_with_no_results(url, collection, times=1000, workers=50)
-    print(f"No results: {result4:02f}")
+    asyncio.get_event_loop().run_until_complete(run(url, collection, concurrency))
 
 
-def _get_link_by_rel(item: Item, rel: str) -> str:
-    return next(filter(lambda x: x.rel == rel, item.links)).href
+async def run(url: str, collection: str, concurrency: int) -> None:
+    result = await query.search_with_fc(
+        url, collection, query.STEP, concurrency, id_field="siteid"
+    )
+    print(f"STEP: {result[1]:.2f}")
 
+    result = await query.search_with_fc(
+        url, collection, query.TNC_ECOREGIONS, concurrency, id_field="ECO_ID_U"
+    )
+    print(f"STEP: {result[1]:.2f}")
 
-def _request_item_repeatedly(
-    url: str, collection: str, times: int, workers: int
-) -> float:
-    catalog = Client.open(url)
-    item = next(catalog.search(collections=[collection], max_items=1).get_items())
-    item_url = _get_link_by_rel(item, "self")
+    result = await query.request_item_repeatedly(
+        url, collection, times=10000, concurrency=50
+    )
+    print(f"Repeated: {result:02f}")
 
-    def get_item_by_url(url: str, timeout: int = 10) -> None:
-        _ = requests.get(url=url, timeout=timeout).text
+    result = await query.request_point_with_no_results(
+        url, collection, times=1000, concurrency=50
+    )
+    print(f"No results: {result:02f}")
 
-    t_start = perf_counter()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
-        futures = []
-        for _ in range(0, times):
-            futures.append(executor.submit(get_item_by_url, url=item_url))
-        for future in concurrent.futures.as_completed(futures):
-            _ = future.result()
+    result = await query.sorting(
+        url,
+        collection,
+        concurrency=50,
+        sortby=[query.sortby("properties.eo:cloud_cover", "desc")],  # noqa
+    )
+    print(f"sort -properties.eo:cloud_cover : {result[1]:02f}")
 
-    return perf_counter() - t_start
+    result = await query.sorting(
+        url,
+        collection,
+        concurrency=50,
+        sortby=[query.sortby("properties.eo:cloud_cover", "asc")],  # noqa
+    )
+    print(f"sort +properties.eo:cloud_cover : {result[1]:02f}")
 
+    result = await query.sorting(
+        url,
+        collection,
+        concurrency=50,
+        sortby=[query.sortby("properties.datetime", "desc")],  # noqa
+    )
+    print(f"sort -properties.datetime : {result[1]:02f}")
 
-def _request_point_with_no_results(
-    url: str, collection: str, times: int, workers: int
-) -> float:
-    def search_with_query_that_has_no_results() -> None:
-        _ = requests.get(
-            url=f"{url}/search",
-            params={"collections": collection, "bbox": "-179,85,-178,89"},
-            timeout=10,
-        ).text
+    result = await query.sorting(
+        url,
+        collection,
+        concurrency=50,
+        sortby=[query.sortby("properties.datetime", "asc")],  # noqa
+    )
+    print(f"sort +properties.datetime : {result[1]:02f}")
 
-    t_start = perf_counter()
-    with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as executor:
-        futures = []
-        for _ in range(0, times):
-            futures.append(executor.submit(search_with_query_that_has_no_results))
-        for future in concurrent.futures.as_completed(futures):
-            _ = future.result()
+    result = await query.sorting(
+        url,
+        collection,
+        concurrency=50,
+        sortby=[query.sortby("properties.created", "desc")],  # noqa
+    )
+    print(f"sort -properties.created : {result[1]:02f}")
 
-    return perf_counter() - t_start
-
-
-def _search_with_fc(url: str, collection: str, fc_filename: str) -> Tuple[int, float]:
-    catalog = Client.open(url)
-    intersectses = query.load_geometries(fc_filename)
-    times = []
-    for intersects in intersectses:
-        try:
-            t_start = perf_counter()
-            resp = catalog.search(
-                collections=[collection], intersects=intersects, limit=1000
-            )
-            count = len(list(resp.get_items()))
-            times.append((count, perf_counter() - t_start))
-        except APIError as e:
-            print(f"APIError: {e}")
-
-    return reduce(lambda a, b: (a[0] + b[0], a[1] + b[1]), times)
+    result = await query.sorting(
+        url,
+        collection,
+        concurrency=50,
+        sortby=[query.sortby("properties.created", "asc")],  # noqa
+    )
+    print(f"sort +properties.created : {result[1]:02f}")
 
 
 if __name__ == "__main__":
