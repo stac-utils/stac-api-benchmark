@@ -68,5 +68,10 @@ repos:
             --no-strict-optional,
             --ignore-missing-imports,
             --implicit-reexport,
+            --warn-unreachable,
+            --pretty,
+            --show-column-numbers,
+            --show-error-codes,
+            --show-error-context,
           ]
-        additional_dependencies: ["types-aiofiles", "types-click"]
+        additional_dependencies: ["types-click"]
