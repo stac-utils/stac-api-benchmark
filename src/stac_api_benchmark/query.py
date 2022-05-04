@@ -43,7 +43,7 @@ def geometries_from(
 
 
 def get_link_by_rel(item: Item, rel: str) -> str:
-    return next(filter(lambda x: x.rel == rel, item.links)).href  # type: ignore
+    return str(next(filter(lambda x: x.rel == rel, item.links)).href)
 
 
 async def get_item_by_url(url: str, sem: Semaphore, timeout: int = 10) -> None:
