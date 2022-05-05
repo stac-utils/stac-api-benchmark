@@ -62,16 +62,4 @@ repos:
     hooks:
       - id: mypy
         exclude: '(test_.*|noxfile)\.py'
-        args:
-          [
-            --strict,
-            --no-strict-optional,
-            --ignore-missing-imports,
-            --implicit-reexport,
-            --warn-unreachable,
-            --pretty,
-            --show-column-numbers,
-            --show-error-codes,
-            --show-error-context,
-          ]
         additional_dependencies: ["types-click"]
