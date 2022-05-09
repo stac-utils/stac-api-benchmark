@@ -61,7 +61,9 @@ You can install *STAC API Benchmark* via pip_ from PyPI_:
 Usage
 -----
 
-Please see the `Command-line Reference <Usage_>`_ for details.
+.. code:: console
+
+    $ poetry run stac-api-benchmark --url http://localhost:8080 --collection collection6
 
 
 Contributing
