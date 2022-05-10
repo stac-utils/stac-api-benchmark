@@ -19,6 +19,7 @@ from pystac_client.exceptions import APIError
 
 STEP = "step_september152014_70rndsel_igbpcl.geojson"
 TNC_ECOREGIONS = "tnc_terr_ecoregions.geojson.zip"
+COUNTRIES = "countries.geojson"
 
 
 def load_geometries(filename: str, id_field: str) -> Dict[str, Dict[str, Any]]:
@@ -28,12 +29,12 @@ def load_geometries(filename: str, id_field: str) -> Dict[str, Dict[str, Any]]:
 
 def load_geojson(filename: str) -> Any:
     if filename.endswith(".zip"):
-        with importlib.resources.path("geojson", filename) as f:
+        with importlib.resources.path("geojson_files", filename) as f:
             with ZipFile(f) as zf:
                 with zf.open(zf.infolist()[0]) as fo:
                     return json.loads(fo.read())
     else:
-        return json.loads(importlib.resources.read_text("geojson", filename))
+        return json.loads(importlib.resources.read_text("geojson_files", filename))
 
 
 def geometries_from(
@@ -106,6 +107,7 @@ async def search(
     sem: Semaphore,
     max_items: Optional[int] = None,
     sortby: Optional[List[Dict[str, str]]] = None,
+    datetime: Optional[str] = None,
 ) -> Tuple[int, float]:
     async with sem:
         try:
@@ -121,6 +123,7 @@ async def search(
                             limit=1000,
                             max_items=max_items,
                             sortby=sortby,
+                            datetime=datetime,
                         )
                         .get_items()
                     )
@@ -138,12 +141,28 @@ async def search(
 
 
 async def search_with_fc(
-    url: str, collection: str, fc_filename: str, concurrency: int, id_field: str
+    url: str,
+    collection: str,
+    fc_filename: str,
+    concurrency: int,
+    id_field: str,
+    max_items: Optional[int] = None,
+    datetime: Optional[str] = None,
+    sortby: Optional[List[Dict[str, str]]] = None,
 ) -> Tuple[List[Union[Tuple[int, float], Exception]], float]:
     intersectses = load_geometries(fc_filename, id_field)
     sem = Semaphore(concurrency)
     cos = [
-        search(url, collection, intersects, search_id, sem)
+        search(
+            url,
+            collection,
+            intersects,
+            search_id,
+            sem,
+            max_items=max_items,
+            datetime=datetime,
+            sortby=sortby,
+        )
         for (search_id, intersects) in intersectses.items()
     ]
     t_start = perf_counter()
@@ -161,14 +180,10 @@ async def sorting(
 ) -> Tuple[List[Union[Tuple[int, float], Exception]], float]:
     sem = Semaphore(concurrency)
     t_start = perf_counter()
-    cos = [search(url, collection, None, "1", sem, 10000, sortby)]
-
-    pending = [asyncio.get_running_loop().create_task(co) for co in cos]
-
-    results = await asyncio.gather(*pending, return_exceptions=True)
+    result = await search(url, collection, None, "1", sem, 10000, sortby)
 
     time = perf_counter() - t_start
-    return results, time  # noqa
+    return [result], time  # noqa
 
 
 def sortby(field: str, direction: str) -> dict[str, str]:

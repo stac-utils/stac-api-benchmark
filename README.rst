@@ -39,7 +39,18 @@ STAC API Benchmark
 Features
 --------
 
-* TODO
+* STEP
+
+* TNC Ecoregions
+
+* Country political boundaries
+
+* Repeated request for same item
+
+* Point request with no results
+
+* Sorts - Datetime, Cloud Cover, Created
+
 
 
 Requirements
