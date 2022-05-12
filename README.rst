@@ -39,24 +39,29 @@ STAC API Benchmark
 Features
 --------
 
-* STEP
+Cold vs. warm. Balance. Cold can't be too slow, warm should be fast.
 
-* TNC Ecoregions
+* STEP - A vector dataset of several hundred ecoregions. These are simple 5 point GeoJSON Polygons covering
+  a few square kilometers. These are much smaller than most gridded data products. For example, Sentinel-2 L2A scenes
+  are 10,000 square km, so they are effectively points when compared against those sizes. The size of these polygons
+  are closer to data produced closer to the ground, for example, by commercial drones.
 
-* Country political boundaries
+.. image:: images/step.png
 
-* Repeated request for same item
+* TNC Ecoregions - A vector dataset of large polygons covering the entire earth. These irregular shapes are larger
+  than most gridded data product scenes and typically span many such grid squares.
 
-* Point request with no results
+.. image:: images/tnc.png
 
-* Sorts - Datetime, Cloud Cover, Created
+* Country political boundaries - Many analyses are done at the country level, as they are funded by the country's
+  government. There are two benchmarks here - one querying for all the items in a country during a single month, and
+  another that only retrieves the first 1000 results, but sorts by cloud cover ascending.
 
+* Random queries. Generate queries with a random geometry and properties filtering on 3 integer-valued properties.
 
+* Repeated request for same item - Benchmarks caching of a single item.
 
-Requirements
-------------
-
-* TODO
+* Sorts - Datetime, Cloud Cover, Created - Benchmarks the performance of results sorting.
 
 
 Installation
@@ -74,7 +79,9 @@ Usage
 
 .. code:: console
 
-    $ poetry run stac-api-benchmark --url http://localhost:8080 --collection collection6
+    $ poetry run stac-api-benchmark --url http://localhost:8080 --collection sentinel-2-l2a \
+        --first-queryable cloud_cover --second-queryable cloud_shadow_percentage \
+        --third-queryable properties.s2:nodata_pixel_percentage --verbosity INFO
 
 
 Contributing

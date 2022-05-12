@@ -3,6 +3,8 @@ import asyncio
 import importlib.resources
 import json
 from asyncio import Semaphore
+from datetime import timezone as tz
+from logging import Logger
 from time import perf_counter
 from typing import Any
 from typing import Dict
@@ -13,9 +15,12 @@ from typing import Union
 from zipfile import ZipFile
 
 import aiohttp
+from faker import Faker
 from pystac import Item
 from pystac_client import Client
 from pystac_client.exceptions import APIError
+
+from .random_geojson import generate_random_polygon
 
 STEP = "step_september152014_70rndsel_igbpcl.geojson"
 TNC_ECOREGIONS = "tnc_terr_ecoregions.geojson.zip"
@@ -83,88 +88,130 @@ async def search_with_query_that_has_no_results(
             await res.text()
 
 
-async def request_point_with_no_results(
-    url: str, collection: str, times: int, concurrency: int
-) -> float:
-    sem = Semaphore(concurrency)
-
-    cos = [
-        search_with_query_that_has_no_results(url, collection, sem)
-        for _ in range(0, times)
-    ]
-    t_start = perf_counter()
-    pending = [asyncio.get_running_loop().create_task(co) for co in cos]
-    await asyncio.gather(*pending, return_exceptions=True)
-
-    return perf_counter() - t_start
-
-
 async def search(
     url: str,
     collection: str,
     intersects: Optional[Dict[str, Any]],
     search_id: str,
     sem: Semaphore,
+    logger: Logger,
     max_items: Optional[int] = None,
     sortby: Optional[List[Dict[str, str]]] = None,
     datetime: Optional[str] = None,
+    filter_lang: Optional[str] = None,
+    cql2_filter: Optional[Dict[str, Any]] = None,
 ) -> Tuple[int, float]:
     async with sem:
+        logger.debug(
+            f"{search_id} => "
+            f"collections = [{collection}], intersects = {intersects}, "
+            f"limit = 1000, max_items = {max_items}, "
+            f"sortby = {sortby}, datetime = {datetime}, "
+            f"filter = {json.dumps(cql2_filter) if cql2_filter else ''}"
+        )
         try:
             t_start = perf_counter()
             count = await asyncio.get_event_loop().run_in_executor(
                 None,
                 lambda: len(
-                    list(
-                        Client.open(url)
-                        .search(
-                            collections=[collection],
-                            intersects=intersects,
-                            limit=1000,
-                            max_items=max_items,
-                            sortby=sortby,
-                            datetime=datetime,
-                        )
-                        .get_items()
-                    )
+                    Client.open(url).search(
+                        collections=[collection],
+                        intersects=intersects,
+                        limit=1000,
+                        max_items=max_items,
+                        sortby=sortby,
+                        datetime=datetime,
+                        filter_lang=filter_lang,
+                        filter=cql2_filter,
+                    )  # get_all_items_as_dict returns dict instead
+                    # of unmarshalled STAC objects
+                    .get_all_items_as_dict()["features"]
                 ),
             )
             time = perf_counter() - t_start
-            print(f"{search_id}: {count} items in\t{time:.3f}s")
+            logger.info(f"{search_id},{count},{time:.2f}")
             return count, time
         except APIError as e:
-            print(f"APIError: {e}")
+            logger.error(f"{search_id}: APIError: {e}")
             raise e
         except Exception as e:
-            print(f"Exception: {e}")
+            logger.error(f"{search_id}: Exception: {e}")
             raise e
 
 
-async def search_with_fc(
+async def search_with_random_queries(
     url: str,
     collection: str,
-    fc_filename: str,
     concurrency: int,
-    id_field: str,
-    max_items: Optional[int] = None,
-    datetime: Optional[str] = None,
-    sortby: Optional[List[Dict[str, str]]] = None,
+    seed: int,
+    first_queryable: str,
+    second_queryable: str,
+    third_queryable: str,
+    logger: Logger,
+    num_features: Optional[int],
 ) -> Tuple[List[Union[Tuple[int, float], Exception]], float]:
-    intersectses = load_geometries(fc_filename, id_field)
     sem = Semaphore(concurrency)
-    cos = [
-        search(
-            url,
-            collection,
-            intersects,
-            search_id,
-            sem,
-            max_items=max_items,
-            datetime=datetime,
-            sortby=sortby,
+    Faker.seed(seed)
+    fake = Faker()
+
+    cos = []
+    for i in range(num_features or 100):
+        geometry = generate_random_polygon(
+            num_vertices=fake.random_int(min=4, max=10),
+            seed=seed,
+            ave_radius=5.0,
+            center_lon=fake.random_int(min=-180, max=180),
+            center_lat=fake.random_int(min=-90, max=90),
         )
-        for (search_id, intersects) in intersectses.items()
-    ]
+        interval_duration = fake.random_int(min=1, max=90)
+        start_datetime = fake.date_time_between(start_date="-5y", tzinfo=tz.utc)
+        end_datetime = fake.date_time_between(
+            start_date=start_datetime, end_date=f"+{interval_duration}d", tzinfo=tz.utc
+        )
+        datetime_interval = f"{start_datetime.isoformat()}/{end_datetime.isoformat()}"
+
+        cql2_filter = {
+            "op": "and",
+            "args": [
+                {
+                    "op": "<=",
+                    "args": [
+                        {"property": first_queryable},
+                        fake.random_int(min=0, max=25),
+                    ],
+                },
+                {
+                    "op": "<=",
+                    "args": [
+                        {"property": second_queryable},
+                        fake.random_int(min=0, max=25),
+                    ],
+                },
+                {
+                    "op": "<=",
+                    "args": [
+                        {"property": third_queryable},
+                        fake.random_int(min=0, max=25),
+                    ],
+                },
+            ],
+        }
+
+        cos.append(
+            search(
+                url=url,
+                collection=collection,
+                intersects=geometry,
+                search_id=f"{i}",
+                sem=sem,
+                datetime=datetime_interval,
+                # sortby=sortby,
+                filter_lang="cql2-json",
+                cql2_filter=cql2_filter,
+                logger=logger,
+            )
+        )
+
     t_start = perf_counter()
 
     pending = [asyncio.get_running_loop().create_task(co) for co in cos]
@@ -175,12 +222,71 @@ async def search_with_fc(
     return results, time  # noqa
 
 
+async def search_with_fc(
+    url: str,
+    collection: str,
+    fc_filename: str,
+    concurrency: int,
+    id_field: str,
+    logger: Logger,
+    num_features: Optional[int],
+    max_items: Optional[int] = None,
+    datetime: Optional[str] = None,
+    sortby: Optional[List[Dict[str, str]]] = None,
+) -> Tuple[List[Union[Tuple[int, float], Exception]], float]:
+    logger.info("id,item count,duration (sec)")
+
+    intersectses = load_geometries(fc_filename, id_field)
+    sem = Semaphore(concurrency)
+    id_to_geometries = [
+        (search_id, intersects) for (search_id, intersects) in intersectses.items()
+    ]
+    if num_features is not None:
+        id_to_geometries = id_to_geometries[:num_features]
+    cos = [
+        search(
+            url=url,
+            collection=collection,
+            intersects=intersects,
+            search_id=search_id,
+            sem=sem,
+            max_items=max_items,
+            datetime=datetime,
+            sortby=sortby,
+            logger=logger,
+        )
+        for (search_id, intersects) in id_to_geometries
+    ]
+
+    t_start = perf_counter()
+
+    pending = [asyncio.get_running_loop().create_task(co) for co in cos]
+    results = await asyncio.gather(*pending, return_exceptions=True)
+
+    time = perf_counter() - t_start
+
+    return results, time  # noqa
+
+
 async def sorting(
-    url: str, collection: str, concurrency: int, sortby: List[Dict[str, str]]
+    url: str,
+    collection: str,
+    concurrency: int,
+    sortby: List[Dict[str, str]],
+    logger: Logger,
 ) -> Tuple[List[Union[Tuple[int, float], Exception]], float]:
     sem = Semaphore(concurrency)
     t_start = perf_counter()
-    result = await search(url, collection, None, "1", sem, 10000, sortby)
+    result = await search(
+        url=url,
+        collection=collection,
+        intersects=None,
+        search_id="1",
+        sem=sem,
+        max_items=10000,
+        sortby=sortby,
+        logger=logger,
+    )
 
     time = perf_counter() - t_start
     return [result], time  # noqa
