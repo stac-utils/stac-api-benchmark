@@ -39,8 +39,6 @@ STAC API Benchmark
 Features
 --------
 
-Cold vs. warm. Balance. Cold can't be too slow, warm should be fast.
-
 * STEP - A vector dataset of several hundred ecoregions. These are simple 5 point GeoJSON Polygons covering
   a few square kilometers. These are much smaller than most gridded data products. For example, Sentinel-2 L2A scenes
   are 10,000 square km, so they are effectively points when compared against those sizes. The size of these polygons
@@ -79,10 +77,13 @@ Usage
 
 .. code:: console
 
-    $ poetry run stac-api-benchmark --url http://localhost:8080 --collection sentinel-2-l2a \
-        --first-queryable cloud_cover --second-queryable cloud_shadow_percentage \
-        --third-queryable properties.s2:nodata_pixel_percentage --verbosity INFO
-
+    $ poetry run stac-api-benchmark \
+        --verbosity INFO \
+        --url http://localhost:8080
+        --collection sentinel-2-l2a \
+        --first-queryable cloud_cover \
+        --second-queryable cloud_shadow_percentage \
+        --third-queryable properties.s2:nodata_pixel_percentage
 
 Contributing
 ------------
