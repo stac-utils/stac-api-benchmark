@@ -2,6 +2,7 @@
 import asyncio
 import importlib.resources
 import json
+import traceback
 from asyncio import Semaphore
 from datetime import timezone as tz
 from logging import Logger
@@ -136,6 +137,7 @@ async def search(
             raise e
         except Exception as e:
             logger.error(f"{search_id}: Exception: {e}")
+            logger.error(traceback.format_exc())
             raise e
 
 
@@ -149,6 +151,7 @@ async def search_with_random_queries(
     third_queryable: str,
     logger: Logger,
     num_features: Optional[int],
+    max_items: int,
 ) -> Tuple[List[Union[Tuple[int, float], Exception]], float]:
     sem = Semaphore(concurrency)
     Faker.seed(seed)
@@ -209,6 +212,7 @@ async def search_with_random_queries(
                 filter_lang="cql2-json",
                 cql2_filter=cql2_filter,
                 logger=logger,
+                max_items=max_items,
             )
         )
 
@@ -230,9 +234,10 @@ async def search_with_fc(
     id_field: str,
     logger: Logger,
     num_features: Optional[int],
-    max_items: Optional[int] = None,
+    max_items: int,
     datetime: Optional[str] = None,
     sortby: Optional[List[Dict[str, str]]] = None,
+    exclude_ids: Optional[List[str]] = None,
 ) -> Tuple[List[Union[Tuple[int, float], Exception]], float]:
     logger.info("id,item count,duration (sec)")
 
@@ -256,6 +261,7 @@ async def search_with_fc(
             logger=logger,
         )
         for (search_id, intersects) in id_to_geometries
+        if exclude_ids is None or search_id not in exclude_ids
     ]
 
     t_start = perf_counter()
@@ -274,6 +280,7 @@ async def sorting(
     concurrency: int,
     sortby: List[Dict[str, str]],
     logger: Logger,
+    max_items: int,
 ) -> Tuple[List[Union[Tuple[int, float], Exception]], float]:
     sem = Semaphore(concurrency)
     t_start = perf_counter()
@@ -283,9 +290,9 @@ async def sorting(
         intersects=None,
         search_id="1",
         sem=sem,
-        max_items=10000,
         sortby=sortby,
         logger=logger,
+        max_items=max_items,
     )
 
     time = perf_counter() - t_start

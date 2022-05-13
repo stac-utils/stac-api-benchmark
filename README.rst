@@ -39,15 +39,15 @@ STAC API Benchmark
 Features
 --------
 
-* STEP - A vector dataset of several hundred ecoregions. These are simple 5 point GeoJSON Polygons covering
+* STEP - A vector dataset of 1983 ecoregions throughout the world. These are simple 5 point GeoJSON Polygons covering
   a few square kilometers. These are much smaller than most gridded data products. For example, Sentinel-2 L2A scenes
   are 10,000 square km, so they are effectively points when compared against those sizes. The size of these polygons
   are closer to data produced closer to the ground, for example, by commercial drones.
 
 .. image:: images/step.png
 
-* TNC Ecoregions - A vector dataset of large polygons covering the entire earth. These irregular shapes are larger
-  than most gridded data product scenes and typically span many such grid squares.
+* TNC Ecoregions - A vector dataset of 814 large polygons multipolygons covering the entire earth. These
+  irregular shapes are larger than most gridded data product scenes and typically span many such grid squares.
 
 .. image:: images/tnc.png
 

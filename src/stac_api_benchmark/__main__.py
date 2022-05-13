@@ -15,8 +15,8 @@ click_log.basic_config(logger)
 
 @click.command()
 @click.version_option()
-@click.option("--url", help="The root / Landing Page url for a STAC API")
-@click.option("--collection", help="The collection to operate on")
+@click.option("--url", required=True, help="The root / Landing Page url for a STAC API")
+@click.option("--collection", required=True, help="The collection to operate on")
 @click.option("--concurrency", default=10, help="The collection to operate on")
 @click.option("--seed", default=0, help="The seed value for random query generation")
 @click.option(
@@ -40,6 +40,11 @@ click_log.basic_config(logger)
     type=int,
     help="Only query this number of features from the feature collection inputs",
 )
+@click.option(
+    "--max-items",
+    default=10000,
+    help="Request this maximum number of items from the API for each query.",
+)
 @click_log.simple_verbosity_option(logger)
 def main(
     url: str,
@@ -50,6 +55,7 @@ def main(
     second_queryable: str,
     third_queryable: str,
     features: Optional[int],
+    max_items: int,
 ) -> None:
     """STAC API Benchmark."""
     asyncio.run(
@@ -62,6 +68,7 @@ def main(
             second_queryable=second_queryable,
             third_queryable=third_queryable,
             num_features=features,
+            max_items=max_items,
         )
     )
 
@@ -75,6 +82,7 @@ async def run(
     second_queryable: str,
     third_queryable: str,
     num_features: Optional[int],
+    max_items: int,
 ) -> None:
     logger.info("Running STEP")
     result: Any = await query.search_with_fc(
@@ -85,6 +93,7 @@ async def run(
         id_field="siteid",
         logger=logger,
         num_features=num_features,
+        max_items=max_items,
     )
     logger.info(f"STEP Results: total time: {result[1]:.2f}s")
 
@@ -97,6 +106,43 @@ async def run(
         id_field="ECO_ID_U",
         logger=logger,
         num_features=num_features,
+        max_items=max_items,
+        # these IDs have self-intersections, so can't be
+        # used to query some databases (e.g., ES)
+        exclude_ids=[
+            "10026",
+            "10096",
+            "10100",
+            "10123",
+            "10158",
+            "10201",
+            "10266",
+            "10213",
+            "10289",
+            "10321",
+            "10339",
+            "10342",
+            "10354",
+            "10356",
+            "17105",
+            "10378",
+            "10385",
+            "10425",
+            "10598",
+            "10633",
+            "10691",
+            "10700",
+            "17009",
+            "10015",
+            "10032",
+            "10040",
+            "10042",
+            "10046",
+            "10047",
+            "10050",
+            "10051",
+            "10076",
+        ],
     )
     logger.info(f"TNC Ecoregions: {result[1]:.2f}s")
 
@@ -110,22 +156,21 @@ async def run(
         datetime="2019-04-01T00:00:00Z/2019-05-01T00:00:00Z",
         logger=logger,
         num_features=num_features,
+        max_items=max_items,
     )
     logger.info(f"Countries: {result[1]:.2f}s")
 
-    logger.info(
-        "Running country political boundaries, 1000 results, cloud cover ascending"
-    )
+    logger.info("Running country political boundaries, cloud cover ascending")
     result = await query.search_with_fc(
         url=url,
         collection=collection,
         fc_filename=query.COUNTRIES,
         concurrency=concurrency,
         id_field="name",
-        max_items=1000,
         sortby=[query.sortby("properties.eo:cloud_cover", "asc")],  # noqa
         logger=logger,
         num_features=num_features,
+        max_items=max_items,
     )
     logger.info(f"Countries: {result[1]:.2f}s")
 
@@ -140,6 +185,7 @@ async def run(
         third_queryable=third_queryable,
         logger=logger,
         num_features=num_features,
+        max_items=max_items,
     )
     logger.info(f"Random Queries (seeded with {seed}): {result[1]:.2f}s")
 
@@ -164,6 +210,7 @@ async def run(
         concurrency=50,
         sortby=[query.sortby("properties.eo:cloud_cover", "desc")],  # noqa
         logger=logger,
+        max_items=max_items,
     )
     logger.info(f"sort -properties.eo:cloud_cover : {result[1]:02f}s")
 
@@ -174,6 +221,7 @@ async def run(
         concurrency=50,
         sortby=[query.sortby("properties.eo:cloud_cover", "asc")],  # noqa
         logger=logger,
+        max_items=max_items,
     )
     logger.info(f"sort +properties.eo:cloud_cover : {result[1]:02f}s")
 
@@ -184,6 +232,7 @@ async def run(
         concurrency=50,
         sortby=[query.sortby("properties.datetime", "desc")],  # noqa
         logger=logger,
+        max_items=max_items,
     )
     logger.info(f"sort -properties.datetime : {result[1]:02f}s")
 
@@ -194,6 +243,7 @@ async def run(
         concurrency=50,
         sortby=[query.sortby("properties.datetime", "asc")],  # noqa
         logger=logger,
+        max_items=max_items,
     )
     logger.info(f"sort +properties.datetime : {result[1]:02f}s")
 
@@ -204,6 +254,7 @@ async def run(
         concurrency=50,
         sortby=[query.sortby("properties.created", "desc")],  # noqa
         logger=logger,
+        max_items=max_items,
     )
     logger.info(f"sort -properties.created : {result[1]:02f}s")
 
@@ -214,6 +265,7 @@ async def run(
         concurrency=50,
         sortby=[query.sortby("properties.created", "asc")],  # noqa
         logger=logger,
+        max_items=max_items,
     )
     logger.info(f"sort +properties.created : {result[1]:02f}s")
 
