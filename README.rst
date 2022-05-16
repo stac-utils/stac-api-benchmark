@@ -39,19 +39,40 @@ STAC API Benchmark
 Features
 --------
 
-* TODO
+* STEP - A vector dataset of 1983 ecoregions throughout the world. These are simple 5 point GeoJSON Polygons covering
+  a few square kilometers. These are much smaller than most gridded data products. For example, Sentinel-2 L2A scenes
+  are 10,000 square km, so they are effectively points when compared against those sizes. The size of these polygons
+  are closer to data produced closer to the ground, for example, by commercial drones.
 
+.. image:: images/step.png
 
-Requirements
-------------
+* TNC Ecoregions - A vector dataset of 814 large polygons multipolygons covering the entire earth. These
+  irregular shapes are larger than most gridded data product scenes and typically span many such grid squares.
 
-* TODO
+.. image:: images/tnc.png
+
+* Country political boundaries - Many analyses are done at the country level, as they are funded by the country's
+  government. There are two benchmarks here - one querying for all the items in a country during a single month, and
+  another that only retrieves the first 1000 results, but sorts by cloud cover ascending.
+
+* Random queries. Generate queries with a random geometry and properties filtering on 3 integer-valued properties.
+
+* Repeated request for same item - Benchmarks caching of a single item.
+
+* Sorts - Datetime, Cloud Cover, Created - Benchmarks the performance of results sorting.
 
 
 Installation
 ------------
 
-You can install *STAC API Benchmark* via pip_ from PyPI_:
+Currently, you must clone the repo and run from there.  After cloning, run:
+
+.. code:: console
+
+   $ poetry install
+
+
+**TODO** You can install *STAC API Benchmark* via pip_ from PyPI_:
 
 .. code:: console
 
@@ -63,7 +84,31 @@ Usage
 
 .. code:: console
 
-    $ poetry run stac-api-benchmark --url http://localhost:8080 --collection collection6
+    $ poetry run stac-api-benchmark \
+        --verbosity INFO \
+        --url http://localhost:8080
+        --collection sentinel-2-l2a \
+        --first-queryable cloud_cover \
+        --second-queryable cloud_shadow_percentage \
+        --third-queryable properties.s2:nodata_pixel_percentage
+
+Options:
+
+- **--url** - The root / Landing Page url for a STAC API
+- **--collection** - The collection to operate on
+- **--concurrency** - The number of concurrent request to run
+- **--seed** - For the random query generation, the seed value. This allows you to consistently generate
+  random queries.
+- **--first-queryable** - The name of first queryable to include in random queries, ranged 0-100
+- **--second-queryable** - The name of second queryable to include in random queries, ranged 0-100
+- **--third-queryable** - The name of third queryable to include in random queries, ranged 0-100
+- **--max-items** - Request this maximum number of items from the API for each query in the feature
+  collection queries. Otherwise, if there are
+  large numbers of results for these queries, it may take a very long to paginate through them, and this doesn't
+  necessarily reflect something a user will do in practice. This defaults to 10000.
+- **--features** - Only query this number of features from the feature collection inputs. This is useful if you just
+  want to run a quicker test with a few queries rather than the thousands in each of the features tests
+- **--verbosity** - DEBUG, INFO, WARNING, ERROR, or CRITICAL to set the level of logging that will be in the output
 
 
 Contributing
