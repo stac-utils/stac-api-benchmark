@@ -17,7 +17,9 @@ click_log.basic_config(logger)
 @click.version_option()
 @click.option("--url", required=True, help="The root / Landing Page url for a STAC API")
 @click.option("--collection", required=True, help="The collection to operate on")
-@click.option("--concurrency", default=10, help="The collection to operate on")
+@click.option(
+    "--concurrency", default=10, help="The number of concurrent request to run"
+)
 @click.option("--seed", default=0, help="The seed value for random query generation")
 @click.option(
     "--first-queryable",
