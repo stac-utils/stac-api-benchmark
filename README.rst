@@ -65,7 +65,14 @@ Features
 Installation
 ------------
 
-You can install *STAC API Benchmark* via pip_ from PyPI_:
+Currently, you must clone the repo and run from there.  After cloning, run:
+
+.. code:: console
+
+   $ poetry install
+
+
+**TODO** You can install *STAC API Benchmark* via pip_ from PyPI_:
 
 .. code:: console
 
@@ -84,6 +91,25 @@ Usage
         --first-queryable cloud_cover \
         --second-queryable cloud_shadow_percentage \
         --third-queryable properties.s2:nodata_pixel_percentage
+
+Options:
+
+- **--url** - The root / Landing Page url for a STAC API
+- **--collection** - The collection to operate on
+- **--concurrency** - The number of concurrent request to run
+- **--seed** - For the random query generation, the seed value. This allows you to consistently generate
+  random queries.
+- **--first-queryable** - The name of first queryable to include in random queries, ranged 0-100
+- **--second-queryable** - The name of second queryable to include in random queries, ranged 0-100
+- **--third-queryable** - The name of third queryable to include in random queries, ranged 0-100
+- **--max-items** - Request this maximum number of items from the API for each query in the feature
+  collection queries. Otherwise, if there are
+  large numbers of results for these queries, it may take a very long to paginate through them, and this doesn't
+  necessarily reflect something a user will do in practice. This defaults to 10000.
+- **--features** - Only query this number of features from the feature collection inputs. This is useful if you just
+  want to run a quicker test with a few queries rather than the thousands in each of the features tests
+- **--verbosity** - DEBUG, INFO, WARNING, ERROR, or CRITICAL to set the level of logging that will be in the output
+
 
 Contributing
 ------------
