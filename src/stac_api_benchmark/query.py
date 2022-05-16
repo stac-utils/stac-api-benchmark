@@ -46,7 +46,7 @@ def load_geojson(filename: str) -> Any:
 def geometries_from(
     geojson: Dict[str, Any], id_field: str
 ) -> Dict[str, Dict[str, Any]]:
-    return {f["properties"][id_field]: f["geometry"] for f in geojson["features"]}
+    return {str(f["properties"][id_field]): f["geometry"] for f in geojson["features"]}
 
 
 def get_link_by_rel(item: Item, rel: str) -> str:
@@ -110,8 +110,8 @@ async def search(
             f"sortby = {sortby}, datetime = {datetime}, "
             f"filter = {json.dumps(cql2_filter) if cql2_filter else ''}"
         )
+        t_start = perf_counter()
         try:
-            t_start = perf_counter()
             count = await asyncio.get_event_loop().run_in_executor(
                 None,
                 lambda: len(
@@ -134,11 +134,13 @@ async def search(
             return count, time
         except APIError as e:
             logger.error(f"{search_id}: APIError: {e}")
-            raise e
+            time = perf_counter() - t_start
+            return -1, time
         except Exception as e:
             logger.error(f"{search_id}: Exception: {e}")
             logger.error(traceback.format_exc())
-            raise e
+            time = perf_counter() - t_start
+            return -1, time
 
 
 async def search_with_random_queries(
