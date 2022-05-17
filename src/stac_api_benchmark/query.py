@@ -17,6 +17,7 @@ from zipfile import ZipFile
 
 import aiohttp
 from faker import Faker
+from pydantic import BaseModel
 from pystac import Item
 from pystac_client import Client
 from pystac_client.exceptions import APIError
@@ -26,6 +27,22 @@ from .random_geojson import generate_random_polygon
 STEP = "step_september152014_70rndsel_igbpcl.geojson"
 TNC_ECOREGIONS = "tnc_terr_ecoregions.geojson.zip"
 COUNTRIES = "countries.geojson"
+
+
+class BenchmarkConfig(BaseModel):  # type: ignore
+    """Config."""
+
+    url: str
+    collection: str
+    concurrency: int
+    seed: int
+    first_queryable: str
+    second_queryable: str
+    third_queryable: str
+    num_features: Optional[int]
+    num_random: int
+    max_items: int
+    logger: Logger
 
 
 def load_geometries(filename: str, id_field: str) -> Dict[str, Dict[str, Any]]:
@@ -60,10 +77,12 @@ async def get_item_by_url(url: str, sem: Semaphore, timeout: int = 10) -> None:
 
 
 async def request_item_repeatedly(
-    url: str, collection: str, times: int, concurrency: int
+    config: BenchmarkConfig, times: int, concurrency: int
 ) -> float:
-    catalog = Client.open(url)
-    item = next(catalog.search(collections=[collection], max_items=1).get_items())
+    catalog = Client.open(config.url)
+    item = next(
+        catalog.search(collections=[config.collection], max_items=1).get_items()
+    )
     item_url = get_link_by_rel(item, "self")
 
     sem = Semaphore(concurrency)
@@ -90,23 +109,20 @@ async def search_with_query_that_has_no_results(
 
 
 async def search(
-    url: str,
-    collection: str,
+    config: BenchmarkConfig,
     intersects: Optional[Dict[str, Any]],
     search_id: str,
     sem: Semaphore,
-    logger: Logger,
-    max_items: Optional[int] = None,
     sortby: Optional[List[Dict[str, str]]] = None,
     datetime: Optional[str] = None,
     filter_lang: Optional[str] = None,
     cql2_filter: Optional[Dict[str, Any]] = None,
 ) -> Tuple[int, float]:
     async with sem:
-        logger.debug(
+        config.logger.debug(
             f"{search_id} => "
-            f"collections = [{collection}], intersects = {intersects}, "
-            f"limit = 1000, max_items = {max_items}, "
+            f"collections = [{config.collection}], intersects = {intersects}, "
+            f"limit = 1000, max_items = {config.max_items}, "
             f"sortby = {sortby}, datetime = {datetime}, "
             f"filter = {json.dumps(cql2_filter) if cql2_filter else ''}"
         )
@@ -115,11 +131,11 @@ async def search(
             count = await asyncio.get_event_loop().run_in_executor(
                 None,
                 lambda: len(
-                    Client.open(url).search(
-                        collections=[collection],
+                    Client.open(config.url).search(
+                        collections=[config.collection],
                         intersects=intersects,
                         limit=1000,
-                        max_items=max_items,
+                        max_items=config.max_items,
                         sortby=sortby,
                         datetime=datetime,
                         filter_lang=filter_lang,
@@ -130,40 +146,31 @@ async def search(
                 ),
             )
             time = perf_counter() - t_start
-            logger.info(f"{search_id},{count},{time:.2f}")
+            config.logger.info(f"{search_id},{count},{time:.2f}")
             return count, time
         except APIError as e:
-            logger.error(f"{search_id}: APIError: {e}")
+            config.logger.error(f"{search_id}: APIError: {e}")
             time = perf_counter() - t_start
             return -1, time
         except Exception as e:
-            logger.error(f"{search_id}: Exception: {e}")
-            logger.error(traceback.format_exc())
+            config.logger.error(f"{search_id}: Exception: {e}")
+            config.logger.error(traceback.format_exc())
             time = perf_counter() - t_start
             return -1, time
 
 
 async def search_with_random_queries(
-    url: str,
-    collection: str,
-    concurrency: int,
-    seed: int,
-    first_queryable: str,
-    second_queryable: str,
-    third_queryable: str,
-    logger: Logger,
-    num_searches: int,
-    max_items: int,
+    config: BenchmarkConfig,
 ) -> Tuple[List[Union[Tuple[int, float], Exception]], float]:
-    sem = Semaphore(concurrency)
-    Faker.seed(seed)
+    sem = Semaphore(config.concurrency)
+    Faker.seed(config.seed)
     fake = Faker()
 
     cos = []
-    for i in range(num_searches):
+    for i in range(config.num_random):
         geometry = generate_random_polygon(
             num_vertices=fake.random_int(min=4, max=10),
-            seed=seed,
+            seed=config.seed,
             ave_radius=5.0,
             center_lon=fake.random_int(min=-180, max=180),
             center_lat=fake.random_int(min=-90, max=90),
@@ -181,21 +188,21 @@ async def search_with_random_queries(
                 {
                     "op": "<=",
                     "args": [
-                        {"property": first_queryable},
+                        {"property": config.first_queryable},
                         fake.random_int(min=0, max=25),
                     ],
                 },
                 {
                     "op": "<=",
                     "args": [
-                        {"property": second_queryable},
+                        {"property": config.second_queryable},
                         fake.random_int(min=0, max=25),
                     ],
                 },
                 {
                     "op": "<=",
                     "args": [
-                        {"property": third_queryable},
+                        {"property": config.third_queryable},
                         fake.random_int(min=0, max=25),
                     ],
                 },
@@ -204,16 +211,13 @@ async def search_with_random_queries(
 
         cos.append(
             search(
-                url=url,
-                collection=collection,
+                config=config,
                 intersects=geometry,
                 search_id=f"{i}",
                 sem=sem,
                 datetime=datetime_interval,
                 filter_lang="cql2-json",
                 cql2_filter=cql2_filter,
-                logger=logger,
-                max_items=max_items,
             )
         )
 
@@ -228,38 +232,30 @@ async def search_with_random_queries(
 
 
 async def search_with_fc(
-    url: str,
-    collection: str,
+    config: BenchmarkConfig,
     fc_filename: str,
-    concurrency: int,
     id_field: str,
-    logger: Logger,
-    num_features: Optional[int],
-    max_items: int,
     datetime: Optional[str] = None,
     sortby: Optional[List[Dict[str, str]]] = None,
     exclude_ids: Optional[List[str]] = None,
 ) -> Tuple[List[Union[Tuple[int, float], Exception]], float]:
-    logger.info("id,item count,duration (sec)")
+    config.logger.info("id,item count,duration (sec)")
 
     intersectses = load_geometries(fc_filename, id_field)
-    sem = Semaphore(concurrency)
+    sem = Semaphore(config.concurrency)
     id_to_geometries = [
         (search_id, intersects) for (search_id, intersects) in intersectses.items()
     ]
-    if num_features is not None:
-        id_to_geometries = id_to_geometries[:num_features]
+    if config.num_features is not None:
+        id_to_geometries = id_to_geometries[: config.num_features]
     cos = [
         search(
-            url=url,
-            collection=collection,
+            config=config,
             intersects=intersects,
             search_id=search_id,
             sem=sem,
-            max_items=max_items,
             datetime=datetime,
             sortby=sortby,
-            logger=logger,
         )
         for (search_id, intersects) in id_to_geometries
         if exclude_ids is None or search_id not in exclude_ids
@@ -276,24 +272,17 @@ async def search_with_fc(
 
 
 async def sorting(
-    url: str,
-    collection: str,
-    concurrency: int,
+    config: BenchmarkConfig,
     sortby: List[Dict[str, str]],
-    logger: Logger,
-    max_items: int,
 ) -> Tuple[List[Union[Tuple[int, float], Exception]], float]:
-    sem = Semaphore(concurrency)
+    sem = Semaphore(config.concurrency)
     t_start = perf_counter()
     result = await search(
-        url=url,
-        collection=collection,
+        config=config,
         intersects=None,
         search_id="1",
         sem=sem,
         sortby=sortby,
-        logger=logger,
-        max_items=max_items,
     )
 
     time = perf_counter() - t_start
