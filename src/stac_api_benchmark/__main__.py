@@ -12,6 +12,8 @@ from . import query
 logger = logging.getLogger(__name__)
 click_log.basic_config(logger)
 
+DEFAULT_RANDOM_QUERIES = 1000
+
 
 @click.command()
 @click.version_option()
@@ -186,7 +188,7 @@ async def run(
         second_queryable=second_queryable,
         third_queryable=third_queryable,
         logger=logger,
-        num_features=num_features,
+        num_searches=num_features or DEFAULT_RANDOM_QUERIES,
         max_items=max_items,
     )
     logger.info(f"Random Queries (seeded with {seed}): {result[1]:.2f}s")
@@ -214,7 +216,7 @@ async def run(
         logger=logger,
         max_items=max_items,
     )
-    logger.info(f"sort -properties.eo:cloud_cover : {result[1]:02f}s")
+    logger.info(f"sort -properties.eo:cloud_cover : {result[1]:.2f}s")
 
     logger.info("Running sort +properties.eo:cloud_cover")
     result = await query.sorting(
@@ -225,7 +227,7 @@ async def run(
         logger=logger,
         max_items=max_items,
     )
-    logger.info(f"sort +properties.eo:cloud_cover : {result[1]:02f}s")
+    logger.info(f"sort +properties.eo:cloud_cover : {result[1]:.2f}s")
 
     logger.info("Running sort -properties.datetime")
     result = await query.sorting(
@@ -236,7 +238,7 @@ async def run(
         logger=logger,
         max_items=max_items,
     )
-    logger.info(f"sort -properties.datetime : {result[1]:02f}s")
+    logger.info(f"sort -properties.datetime : {result[1]:.2f}s")
 
     logger.info("Running sort +properties.datetime")
     result = await query.sorting(
@@ -247,7 +249,7 @@ async def run(
         logger=logger,
         max_items=max_items,
     )
-    logger.info(f"sort +properties.datetime : {result[1]:02f}s")
+    logger.info(f"sort +properties.datetime : {result[1]:.2f}s")
 
     logger.info("Running sort -properties.created")
     result = await query.sorting(
@@ -258,7 +260,7 @@ async def run(
         logger=logger,
         max_items=max_items,
     )
-    logger.info(f"sort -properties.created : {result[1]:02f}s")
+    logger.info(f"sort -properties.created : {result[1]:.2f}s")
 
     logger.info("Running sort +properties.created")
     result = await query.sorting(
@@ -269,7 +271,7 @@ async def run(
         logger=logger,
         max_items=max_items,
     )
-    logger.info(f"sort +properties.created : {result[1]:02f}s")
+    logger.info(f"sort +properties.created : {result[1]:.2f}s")
 
 
 if __name__ == "__main__":

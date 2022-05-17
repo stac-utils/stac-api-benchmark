@@ -152,7 +152,7 @@ async def search_with_random_queries(
     second_queryable: str,
     third_queryable: str,
     logger: Logger,
-    num_features: Optional[int],
+    num_searches: int,
     max_items: int,
 ) -> Tuple[List[Union[Tuple[int, float], Exception]], float]:
     sem = Semaphore(concurrency)
@@ -160,7 +160,7 @@ async def search_with_random_queries(
     fake = Faker()
 
     cos = []
-    for i in range(num_features or 100):
+    for i in range(num_searches):
         geometry = generate_random_polygon(
             num_vertices=fake.random_int(min=4, max=10),
             seed=seed,
@@ -210,7 +210,6 @@ async def search_with_random_queries(
                 search_id=f"{i}",
                 sem=sem,
                 datetime=datetime_interval,
-                # sortby=sortby,
                 filter_lang="cql2-json",
                 cql2_filter=cql2_filter,
                 logger=logger,
