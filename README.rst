@@ -106,8 +106,9 @@ Options:
   collection queries. Otherwise, if there are
   large numbers of results for these queries, it may take a very long to paginate through them, and this doesn't
   necessarily reflect something a user will do in practice. This defaults to 10000.
-- **--features** - Only query this number of features from the feature collection inputs. This is useful if you just
+- **--num-features** - Only query this number of features from the feature collection inputs. This is useful if you just
   want to run a quicker test with a few queries rather than the thousands in each of the features tests
+- **--num-random** - The number of random queries to run.
 - **--verbosity** - DEBUG, INFO, WARNING, ERROR, or CRITICAL to set the level of logging that will be in the output
 
 
