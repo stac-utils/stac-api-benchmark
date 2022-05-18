@@ -4,6 +4,7 @@ import importlib.resources
 import json
 import traceback
 from asyncio import Semaphore
+from dataclasses import dataclass
 from datetime import timezone as tz
 from logging import Logger
 from time import perf_counter
@@ -17,7 +18,6 @@ from zipfile import ZipFile
 
 import aiohttp
 from faker import Faker
-from pydantic import BaseModel
 from pystac import Item
 from pystac_client import Client
 from pystac_client.exceptions import APIError
@@ -29,7 +29,8 @@ TNC_ECOREGIONS = "tnc_terr_ecoregions.geojson.zip"
 COUNTRIES = "countries.geojson"
 
 
-class BenchmarkConfig(BaseModel):  # type: ignore
+@dataclass
+class BenchmarkConfig:
     """Config."""
 
     url: str
