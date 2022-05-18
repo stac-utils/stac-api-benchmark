@@ -52,7 +52,7 @@ click_log.basic_config(logger)
 @click.command()
 @click.version_option()
 @click.option("--url", required=True, help="The root / Landing Page url for a STAC API")
-@click.option("--collection", required=True, help="The collection to operate on")
+@click.option("--collection", required=True, help="The collection over which to query")
 @click.option(
     "--concurrency", default=10, help="The number of concurrent request to run"
 )
@@ -81,12 +81,12 @@ click_log.basic_config(logger)
 @click.option(
     "--num-random",
     default=10000,
-    help="Only query this number of features from the feature collection inputs",
+    help="The number of random queries to run",
 )
 @click.option(
     "--max-items",
     default=10000,
-    help="Request this maximum number of items from the API for each query.",
+    help="Request this maximum number of items from the API for each query",
 )
 @click_log.simple_verbosity_option(logger)
 def main(
