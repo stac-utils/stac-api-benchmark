@@ -110,7 +110,7 @@ Options:
   want to run a quicker test with a few queries rather than the thousands in each of the features tests
 - **--num-random** - The number of random queries to run.
 - **--verbosity** - DEBUG, INFO, WARNING, ERROR, or CRITICAL to set the level of logging that will be in the output
-
+- **--timeout** - Amount of time (in seconds) to run searches before considering them to have timed out
 
 Contributing
 ------------
