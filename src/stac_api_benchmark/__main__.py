@@ -1,7 +1,8 @@
 """Command-line interface."""
 import asyncio
 import logging
-from typing import Optional, Any
+from typing import Any
+from typing import Optional
 
 import click
 import click_log
