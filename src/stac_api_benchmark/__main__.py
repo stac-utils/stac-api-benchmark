@@ -1,7 +1,7 @@
 """Command-line interface."""
 import asyncio
 import logging
-from typing import Optional
+from typing import Optional, Any
 
 import click
 import click_log
@@ -135,59 +135,59 @@ def main(
 
 
 async def run(config: query.BenchmarkConfig) -> None:
-    # logger.info("Running STEP")
-    # result: Any = await query.search_with_fc(
-    #     config=config,
-    #     fc_filename=query.STEP,
-    #     id_field="siteid",
-    # )
-    # logger.info(f"STEP Results: total time: {result[1]:.2f}s")
-    #
-    # logger.info("Running TNC Ecoregions")
-    # result = await query.search_with_fc(
-    #     config=config,
-    #     fc_filename=query.TNC_ECOREGIONS,
-    #     id_field="ECO_ID_U",
-    #     exclude_ids=TNC_EXCLUDED_IDS,
-    # )
-    # logger.info(f"TNC Ecoregions: {result[1]:.2f}s")
-    #
-    # logger.info("Running country political boundaries, in April 2019")
-    # result = await query.search_with_fc(
-    #     config=config,
-    #     fc_filename=query.COUNTRIES,
-    #     id_field="name",
-    #     datetime="2019-04-01T00:00:00Z/2019-05-01T00:00:00Z",
-    # )
-    # logger.info(f"Countries: {result[1]:.2f}s")
-    #
-    # logger.info("Running country political boundaries, cloud cover ascending")
-    # result = await query.search_with_fc(
-    #     config=config,
-    #     fc_filename=query.COUNTRIES,
-    #     id_field="name",
-    #     sortby=[query.es_sortby("properties.eo:cloud_cover", "asc")],  # noqa
-    # )
-    # logger.info(f"Countries: {result[1]:.2f}s")
-    #
-    # logger.info(f"Running random queries (seeded with {config.seed})")
-    # result = await query.search_with_random_queries(
-    #     config=config,
-    # )
-    # logger.info(f"Random Queries (seeded with {config.seed}): {result[1]:.2f}s")
-    #
-    # repeated_item_times = 10000
-    # repeated_item_concurrency = 50
-    # logger.info(
-    #     f"Running repeated item, times={repeated_item_times} "
-    #     f"concurrency={repeated_item_concurrency}"
-    # )
-    # result = await query.request_item_repeatedly(
-    #     config=config,
-    #     times=repeated_item_times,
-    #     concurrency=repeated_item_concurrency,
-    # )
-    # logger.info(f"Repeated: {result:.2f}s")
+    logger.info("Running STEP")
+    result: Any = await query.search_with_fc(
+        config=config,
+        fc_filename=query.STEP,
+        id_field="siteid",
+    )
+    logger.info(f"STEP Results: total time: {result[1]:.2f}s")
+
+    logger.info("Running TNC Ecoregions")
+    result = await query.search_with_fc(
+        config=config,
+        fc_filename=query.TNC_ECOREGIONS,
+        id_field="ECO_ID_U",
+        exclude_ids=TNC_EXCLUDED_IDS,
+    )
+    logger.info(f"TNC Ecoregions: {result[1]:.2f}s")
+
+    logger.info("Running country political boundaries, in April 2019")
+    result = await query.search_with_fc(
+        config=config,
+        fc_filename=query.COUNTRIES,
+        id_field="name",
+        datetime="2019-04-01T00:00:00Z/2019-05-01T00:00:00Z",
+    )
+    logger.info(f"Countries: {result[1]:.2f}s")
+
+    logger.info("Running country political boundaries, cloud cover ascending")
+    result = await query.search_with_fc(
+        config=config,
+        fc_filename=query.COUNTRIES,
+        id_field="name",
+        sortby=[query.es_sortby("properties.eo:cloud_cover", "asc")],  # noqa
+    )
+    logger.info(f"Countries: {result[1]:.2f}s")
+
+    logger.info(f"Running random queries (seeded with {config.seed})")
+    result = await query.search_with_random_queries(
+        config=config,
+    )
+    logger.info(f"Random Queries (seeded with {config.seed}): {result[1]:.2f}s")
+
+    repeated_item_times = 10000
+    repeated_item_concurrency = 50
+    logger.info(
+        f"Running repeated item, times={repeated_item_times} "
+        f"concurrency={repeated_item_concurrency}"
+    )
+    result = await query.request_item_repeatedly(
+        config=config,
+        times=repeated_item_times,
+        concurrency=repeated_item_concurrency,
+    )
+    logger.info(f"Repeated: {result:.2f}s")
 
     await run_sort(config, "properties.eo:cloud_cover", "desc")
     await run_sort(config, "properties.eo:cloud_cover", "asc")
