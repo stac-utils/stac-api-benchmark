@@ -4,6 +4,8 @@ import importlib.resources
 import json
 import traceback
 from asyncio import Semaphore
+from asyncio import TimeoutError
+from asyncio import wait_for
 from dataclasses import dataclass
 from datetime import timezone as tz
 from logging import Logger
@@ -45,6 +47,7 @@ class BenchmarkConfig:
     num_random: int
     max_items: int
     logger: Logger
+    timeout: int
 
 
 def load_geometries(filename: str, id_field: str) -> Dict[str, Dict[str, Any]]:
@@ -130,28 +133,35 @@ async def search(
         )
         t_start = perf_counter()
         try:
-            count = await asyncio.get_event_loop().run_in_executor(
-                None,
-                lambda: len(
-                    Client.open(config.url).search(
-                        collections=[collection],
-                        intersects=intersects,
-                        limit=1000,
-                        max_items=config.max_items,
-                        sortby=sortby,
-                        datetime=datetime,
-                        filter_lang=filter_lang,
-                        filter=cql2_filter,
-                    )  # get_all_items_as_dict returns dict instead
-                    # of unmarshalled STAC objects
-                    .get_all_items_as_dict()["features"]
+            count = await wait_for(
+                asyncio.get_event_loop().run_in_executor(
+                    None,
+                    lambda: len(
+                        Client.open(config.url).search(
+                            collections=[collection],
+                            intersects=intersects,
+                            limit=1000,
+                            max_items=config.max_items,
+                            sortby=sortby,
+                            datetime=datetime,
+                            filter_lang=filter_lang,
+                            filter=cql2_filter,
+                        )  # get_all_items_as_dict returns dict instead
+                        # of unmarshalled STAC objects
+                        .get_all_items_as_dict()["features"]
+                    ),
                 ),
+                timeout=config.timeout,
             )
             time = perf_counter() - t_start
             config.logger.info(f"{search_id},{count},{time:.2f}")
             return count, time
         except APIError as e:
             config.logger.error(f"{search_id}: APIError: {e}")
+            time = perf_counter() - t_start
+            return -1, time
+        except TimeoutError as e:
+            config.logger.error(f"{search_id}: TimeoutError ({config.timeout}s): {e}")
             time = perf_counter() - t_start
             return -1, time
         except Exception as e:

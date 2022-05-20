@@ -94,6 +94,12 @@ click_log.basic_config(logger)
     default=10000,
     help="Request this maximum number of items from the API for each query",
 )
+@click.option(
+    "--timeout",
+    default=30,
+    help="Maximum duration before each search request is considered to have timed out,"
+    " in seconds",
+)
 @click_log.simple_verbosity_option(logger)
 def main(
     url: str,
@@ -106,6 +112,7 @@ def main(
     num_features: Optional[int],
     num_random: int,
     max_items: int,
+    timeout: int,
 ) -> None:
     """STAC API Benchmark."""
     asyncio.run(
@@ -122,6 +129,7 @@ def main(
                 num_random=num_random,
                 max_items=max_items,
                 logger=logger,
+                timeout=timeout,
             )
         )
     )
