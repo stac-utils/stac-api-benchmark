@@ -62,4 +62,4 @@ repos:
     hooks:
       - id: mypy
         exclude: '(test_.*|noxfile)\.py'
-        additional_dependencies: ["types-click"]
+        additional_dependencies: ["types-click", "returns"]

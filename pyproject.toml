@@ -24,6 +24,7 @@ aiohttp = {extras = ["speedups"], version = "^3.8.1"}
 geojson = "^2.5.0"
 faker = "^13.11.1"
 click-log = "^0.4.0"
+returns = "^0.19.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
@@ -74,6 +75,7 @@ show_error_codes = true
 show_error_context = true
 ignore_missing_imports = true
 disallow_untyped_decorators = false
+plugins = "returns.contrib.mypy.returns_plugin"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

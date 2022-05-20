@@ -6,6 +6,8 @@ from typing import Optional
 
 import click
 import click_log
+from returns.result import Failure
+from returns.result import Success
 
 from . import query
 
@@ -208,7 +210,18 @@ async def run_sort(config: query.BenchmarkConfig, field: str, direction: str) ->
             collection=collection,
             sortby=[query.es_sortby(field, direction)],  # noqa
         )
-        logger.info(f"Results: sort {field} {direction} : {result[1]:.2f}s")
+        match result:
+            case Success(value):
+                logger.info(
+                    f"Results: sort {field} {direction} on {collection} "
+                    f": {value.duration:.2f}s"
+                )
+
+            case Failure(value):
+                logger.info(
+                    f"Results: sort {field} {direction} on {collection} "
+                    f": Error: {value.msg}"
+                )
 
 
 if __name__ == "__main__":
