@@ -7,6 +7,7 @@ from asyncio import Semaphore
 from dataclasses import dataclass
 from datetime import timezone as tz
 from logging import Logger
+from random import shuffle
 from time import perf_counter
 from typing import Any
 from typing import Dict
@@ -34,7 +35,7 @@ class BenchmarkConfig:
     """Config."""
 
     url: str
-    collection: str
+    collections: tuple[str, ...]
     concurrency: int
     seed: int
     first_queryable: str
@@ -80,17 +81,16 @@ async def get_item_by_url(url: str, sem: Semaphore, timeout: int = 10) -> None:
 async def request_item_repeatedly(
     config: BenchmarkConfig, times: int, concurrency: int
 ) -> float:
-    catalog = Client.open(config.url)
-    item = next(
-        catalog.search(collections=[config.collection], max_items=1).get_items()
-    )
-    item_url = get_link_by_rel(item, "self")
-
     sem = Semaphore(concurrency)
+    catalog = Client.open(config.url)
 
-    cos = [get_item_by_url(item_url, sem) for _ in range(0, times)]
+    cos = []
+    for collection in config.collections:
+        item = next(catalog.search(collections=[collection], max_items=1).get_items())
+        item_url = get_link_by_rel(item, "self")
+        cos.extend([get_item_by_url(item_url, sem) for _ in range(0, times)])
+
     t_start = perf_counter()
-
     pending = [asyncio.get_running_loop().create_task(co) for co in cos]
     await asyncio.gather(*pending, return_exceptions=True)
     return perf_counter() - t_start
@@ -111,6 +111,7 @@ async def search_with_query_that_has_no_results(
 
 async def search(
     config: BenchmarkConfig,
+    collection: str,
     intersects: Optional[Dict[str, Any]],
     search_id: str,
     sem: Semaphore,
@@ -122,7 +123,7 @@ async def search(
     async with sem:
         config.logger.debug(
             f"{search_id} => "
-            f"collections = [{config.collection}], intersects = {intersects}, "
+            f"collections = [{collection}], intersects = {intersects}, "
             f"limit = 1000, max_items = {config.max_items}, "
             f"sortby = {sortby}, datetime = {datetime}, "
             f"filter = {json.dumps(cql2_filter) if cql2_filter else ''}"
@@ -133,7 +134,7 @@ async def search(
                 None,
                 lambda: len(
                     Client.open(config.url).search(
-                        collections=[config.collection],
+                        collections=[collection],
                         intersects=intersects,
                         limit=1000,
                         max_items=config.max_items,
@@ -168,61 +169,69 @@ async def search_with_random_queries(
     fake = Faker()
 
     cos = []
-    for i in range(config.num_random):
-        geometry = generate_random_polygon(
-            num_vertices=fake.random_int(min=4, max=10),
-            seed=config.seed,
-            ave_radius=5.0,
-            center_lon=fake.random_int(min=-180, max=180),
-            center_lat=fake.random_int(min=-90, max=90),
-        )
-        interval_duration = fake.random_int(min=1, max=90)
-        start_datetime = fake.date_time_between(start_date="-5y", tzinfo=tz.utc)
-        end_datetime = fake.date_time_between(
-            start_date=start_datetime, end_date=f"+{interval_duration}d", tzinfo=tz.utc
-        )
-        datetime_interval = f"{start_datetime.isoformat()}/{end_datetime.isoformat()}"
-
-        cql2_filter = {
-            "op": "and",
-            "args": [
-                {
-                    "op": "<=",
-                    "args": [
-                        {"property": config.first_queryable},
-                        fake.random_int(min=0, max=25),
-                    ],
-                },
-                {
-                    "op": "<=",
-                    "args": [
-                        {"property": config.second_queryable},
-                        fake.random_int(min=0, max=25),
-                    ],
-                },
-                {
-                    "op": "<=",
-                    "args": [
-                        {"property": config.third_queryable},
-                        fake.random_int(min=0, max=25),
-                    ],
-                },
-            ],
-        }
-
-        cos.append(
-            search(
-                config=config,
-                intersects=geometry,
-                search_id=f"{i}",
-                sem=sem,
-                datetime=datetime_interval,
-                filter_lang="cql2-json",
-                cql2_filter=cql2_filter,
+    for collection in config.collections:
+        for i in range(config.num_random):
+            geometry = generate_random_polygon(
+                num_vertices=fake.random_int(min=4, max=10),
+                seed=config.seed,
+                ave_radius=5.0,
+                center_lon=fake.random_int(min=-180, max=180),
+                center_lat=fake.random_int(min=-90, max=90),
             )
-        )
+            interval_duration = fake.random_int(min=1, max=90)
+            start_datetime = fake.date_time_between(start_date="-5y", tzinfo=tz.utc)
+            end_datetime = fake.date_time_between(
+                start_date=start_datetime,
+                end_date=f"+{interval_duration}d",
+                tzinfo=tz.utc,
+            )
+            datetime_interval = (
+                f"{start_datetime.isoformat()}/{end_datetime.isoformat()}"
+            )
+
+            cql2_filter = {
+                "op": "and",
+                "args": [
+                    {
+                        "op": "<=",
+                        "args": [
+                            {"property": config.first_queryable},
+                            fake.random_int(min=0, max=25),
+                        ],
+                    },
+                    {
+                        "op": "<=",
+                        "args": [
+                            {"property": config.second_queryable},
+                            fake.random_int(min=0, max=25),
+                        ],
+                    },
+                    {
+                        "op": "<=",
+                        "args": [
+                            {"property": config.third_queryable},
+                            fake.random_int(min=0, max=25),
+                        ],
+                    },
+                ],
+            }
+
+            cos.append(
+                search(
+                    config=config,
+                    collection=collection,
+                    intersects=geometry,
+                    search_id=f"{i}",
+                    sem=sem,
+                    datetime=datetime_interval,
+                    filter_lang="cql2-json",
+                    cql2_filter=cql2_filter,
+                )
+            )
 
     t_start = perf_counter()
+
+    shuffle(cos)
 
     pending = [asyncio.get_running_loop().create_task(co) for co in cos]
 
@@ -249,20 +258,25 @@ async def search_with_fc(
     ]
     if config.num_features is not None:
         id_to_geometries = id_to_geometries[: config.num_features]
+
     cos = [
         search(
-            config=config,
+            collection=collection,
             intersects=intersects,
             search_id=search_id,
+            config=config,
             sem=sem,
             datetime=datetime,
             sortby=sortby,
         )
         for (search_id, intersects) in id_to_geometries
+        for collection in config.collections
         if exclude_ids is None or search_id not in exclude_ids
     ]
 
     t_start = perf_counter()
+
+    shuffle(cos)
 
     pending = [asyncio.get_running_loop().create_task(co) for co in cos]
     results = await asyncio.gather(*pending, return_exceptions=True)
@@ -274,12 +288,14 @@ async def search_with_fc(
 
 async def sorting(
     config: BenchmarkConfig,
+    collection: str,
     sortby: List[Dict[str, str]],
 ) -> Tuple[List[Union[Tuple[int, float], Exception]], float]:
     sem = Semaphore(config.concurrency)
     t_start = perf_counter()
     result = await search(
         config=config,
+        collection=collection,
         intersects=None,
         search_id="1",
         sem=sem,
@@ -290,5 +306,5 @@ async def sorting(
     return [result], time  # noqa
 
 
-def sortby(field: str, direction: str) -> dict[str, str]:
+def es_sortby(field: str, direction: str) -> dict[str, str]:
     return {"field": field, "direction": direction}

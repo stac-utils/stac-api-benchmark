@@ -52,7 +52,13 @@ click_log.basic_config(logger)
 @click.command()
 @click.version_option()
 @click.option("--url", required=True, help="The root / Landing Page url for a STAC API")
-@click.option("--collection", required=True, help="The collection over which to query")
+@click.option(
+    "--collection",
+    "collections",
+    required=True,
+    multiple=True,
+    help="The collections over which to query (comma-separated)",
+)
 @click.option(
     "--concurrency", default=10, help="The number of concurrent request to run"
 )
@@ -91,7 +97,7 @@ click_log.basic_config(logger)
 @click_log.simple_verbosity_option(logger)
 def main(
     url: str,
-    collection: str,
+    collections: tuple[str, ...],
     concurrency: int,
     seed: int,
     first_queryable: str,
@@ -106,7 +112,7 @@ def main(
         run(
             query.BenchmarkConfig(
                 url=url,
-                collection=collection,
+                collections=collections,
                 concurrency=concurrency,
                 seed=seed,
                 first_queryable=first_queryable,
@@ -153,7 +159,7 @@ async def run(config: query.BenchmarkConfig) -> None:
         config=config,
         fc_filename=query.COUNTRIES,
         id_field="name",
-        sortby=[query.sortby("properties.eo:cloud_cover", "asc")],  # noqa
+        sortby=[query.es_sortby("properties.eo:cloud_cover", "asc")],  # noqa
     )
     logger.info(f"Countries: {result[1]:.2f}s")
 
@@ -188,11 +194,13 @@ async def run(config: query.BenchmarkConfig) -> None:
 
 async def run_sort(config: query.BenchmarkConfig, field: str, direction: str) -> None:
     logger.info(f"Running sort {field} {direction}")
-    result = await query.sorting(
-        config,
-        sortby=[query.sortby(field, direction)],  # noqa
-    )
-    logger.info(f"Results: sort {field} {direction} : {result[1]:.2f}s")
+    for collection in config.collections:
+        result = await query.sorting(
+            config=config,
+            collection=collection,
+            sortby=[query.es_sortby(field, direction)],  # noqa
+        )
+        logger.info(f"Results: sort {field} {direction} : {result[1]:.2f}s")
 
 
 if __name__ == "__main__":
