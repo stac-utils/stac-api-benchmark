@@ -24,12 +24,17 @@ from faker import Faker
 from pystac import Item
 from pystac_client import Client
 from pystac_client.exceptions import APIError
+from returns.result import Failure
+from returns.result import Result
+from returns.result import Success
 
 from .random_geojson import generate_random_polygon
 
 STEP = "step_september152014_70rndsel_igbpcl.geojson"
 TNC_ECOREGIONS = "tnc_terr_ecoregions.geojson.zip"
 COUNTRIES = "countries.geojson"
+
+sequential_sem = Semaphore(1)
 
 
 @dataclass
@@ -48,6 +53,22 @@ class BenchmarkConfig:
     max_items: int
     logger: Logger
     timeout: int
+
+
+@dataclass
+class RunSuccess:
+    """Successful execution of a benchmark."""
+
+    duration: float
+    count: int
+
+
+@dataclass
+class RunFailure:
+    """Failed execution of a benchmark."""
+
+    duration: float
+    msg: str
 
 
 def load_geometries(filename: str, id_field: str) -> Dict[str, Dict[str, Any]]:
@@ -122,7 +143,7 @@ async def search(
     datetime: Optional[str] = None,
     filter_lang: Optional[str] = None,
     cql2_filter: Optional[Dict[str, Any]] = None,
-) -> Tuple[int, float]:
+) -> Result[RunSuccess, RunFailure]:
     async with sem:
         config.logger.debug(
             f"{search_id} => "
@@ -155,20 +176,23 @@ async def search(
             )
             time = perf_counter() - t_start
             config.logger.info(f"{search_id},{count},{time:.2f}")
-            return count, time
+            return Success(RunSuccess(time, count))
         except APIError as e:
-            config.logger.error(f"{search_id}: APIError: {e}")
             time = perf_counter() - t_start
-            return -1, time
+            msg = f"{search_id}: APIError: {e}"
+            config.logger.error(msg)
+            return Failure(RunFailure(time, msg))
         except TimeoutError as e:
-            config.logger.error(f"{search_id}: TimeoutError ({config.timeout}s): {e}")
             time = perf_counter() - t_start
-            return -1, time
+            msg = f"{search_id}: TimeoutError ({config.timeout}s): {e}"
+            config.logger.error(msg)
+            return Failure(RunFailure(time, msg))
         except Exception as e:
-            config.logger.error(f"{search_id}: Exception: {e}")
-            config.logger.error(traceback.format_exc())
             time = perf_counter() - t_start
-            return -1, time
+            msg = f"{search_id}: Exception: {e}"
+            config.logger.error(msg)
+            config.logger.error(traceback.format_exc())
+            return Failure(RunFailure(time, msg))
 
 
 async def search_with_random_queries(
@@ -258,7 +282,7 @@ async def search_with_fc(
     datetime: Optional[str] = None,
     sortby: Optional[List[Dict[str, str]]] = None,
     exclude_ids: Optional[List[str]] = None,
-) -> Tuple[List[Union[Tuple[int, float], Exception]], float]:
+) -> Tuple[List[Result[RunSuccess, RunFailure]], float]:
     config.logger.info("id,item count,duration (sec)")
 
     intersectses = load_geometries(fc_filename, id_field)
@@ -284,10 +308,9 @@ async def search_with_fc(
         if exclude_ids is None or search_id not in exclude_ids
     ]
 
-    t_start = perf_counter()
-
     shuffle(cos)
 
+    t_start = perf_counter()
     pending = [asyncio.get_running_loop().create_task(co) for co in cos]
     results = await asyncio.gather(*pending, return_exceptions=True)
 
@@ -300,20 +323,15 @@ async def sorting(
     config: BenchmarkConfig,
     collection: str,
     sortby: List[Dict[str, str]],
-) -> Tuple[List[Union[Tuple[int, float], Exception]], float]:
-    sem = Semaphore(config.concurrency)
-    t_start = perf_counter()
-    result = await search(
+) -> Result[RunSuccess, RunFailure]:
+    return await search(
         config=config,
         collection=collection,
         intersects=None,
         search_id="1",
-        sem=sem,
+        sem=sequential_sem,
         sortby=sortby,
     )
-
-    time = perf_counter() - t_start
-    return [result], time  # noqa
 
 
 def es_sortby(field: str, direction: str) -> dict[str, str]:
