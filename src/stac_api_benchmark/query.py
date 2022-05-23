@@ -71,6 +71,9 @@ class RunFailure:
     msg: str
 
 
+RunResult = Result[RunSuccess, RunFailure]
+
+
 def load_geometries(filename: str, id_field: str) -> Dict[str, Dict[str, Any]]:
     """Load a list of GeoJSON Geometry objects from a file."""
     return geometries_from(load_geojson(filename), id_field)
@@ -143,7 +146,7 @@ async def search(
     datetime: Optional[str] = None,
     filter_lang: Optional[str] = None,
     cql2_filter: Optional[Dict[str, Any]] = None,
-) -> Result[RunSuccess, RunFailure]:
+) -> RunResult:
     async with sem:
         config.logger.debug(
             f"{search_id} => "
@@ -282,7 +285,7 @@ async def search_with_fc(
     datetime: Optional[str] = None,
     sortby: Optional[List[Dict[str, str]]] = None,
     exclude_ids: Optional[List[str]] = None,
-) -> Tuple[List[Result[RunSuccess, RunFailure]], float]:
+) -> Tuple[List[RunResult], float]:
     config.logger.info("id,item count,duration (sec)")
 
     intersectses = load_geometries(fc_filename, id_field)
@@ -323,7 +326,7 @@ async def sorting(
     config: BenchmarkConfig,
     collection: str,
     sortby: List[Dict[str, str]],
-) -> Result[RunSuccess, RunFailure]:
+) -> RunResult:
     return await search(
         config=config,
         collection=collection,

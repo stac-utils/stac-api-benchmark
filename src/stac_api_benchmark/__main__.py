@@ -1,5 +1,6 @@
 """Command-line interface."""
 import asyncio
+import json
 import logging
 from typing import Any
 from typing import Optional
@@ -117,7 +118,7 @@ def main(
     timeout: int,
 ) -> None:
     """STAC API Benchmark."""
-    asyncio.run(
+    results = asyncio.run(
         run(
             query.BenchmarkConfig(
                 url=url,
@@ -136,8 +137,11 @@ def main(
         )
     )
 
+    print(json.dumps(results))
 
-async def run(config: query.BenchmarkConfig) -> None:
+
+async def run(config: query.BenchmarkConfig) -> dict[str, float]:
+    results: dict[str, float] = {}
     logger.info("Running STEP")
     result: Any = await query.search_with_fc(
         config=config,
@@ -145,6 +149,7 @@ async def run(config: query.BenchmarkConfig) -> None:
         id_field="siteid",
     )
     logger.info(f"STEP Results: total time: {result[1]:.2f}s")
+    results["step"] = result[1]
 
     logger.info("Running TNC Ecoregions")
     result = await query.search_with_fc(
@@ -154,6 +159,7 @@ async def run(config: query.BenchmarkConfig) -> None:
         exclude_ids=TNC_EXCLUDED_IDS,
     )
     logger.info(f"TNC Ecoregions: {result[1]:.2f}s")
+    results["tnc"] = result[1]
 
     logger.info("Running country political boundaries, in April 2019")
     result = await query.search_with_fc(
@@ -162,7 +168,8 @@ async def run(config: query.BenchmarkConfig) -> None:
         id_field="name",
         datetime="2019-04-01T00:00:00Z/2019-05-01T00:00:00Z",
     )
-    logger.info(f"Countries: {result[1]:.2f}s")
+    logger.info(f"Countries, April 2019: {result[1]:.2f}s")
+    results["countries_apr_2019"] = result[1]
 
     logger.info("Running country political boundaries, cloud cover ascending")
     result = await query.search_with_fc(
@@ -171,13 +178,15 @@ async def run(config: query.BenchmarkConfig) -> None:
         id_field="name",
         sortby=[query.es_sortby("properties.eo:cloud_cover", "asc")],  # noqa
     )
-    logger.info(f"Countries: {result[1]:.2f}s")
+    logger.info(f"Countries, cloud cover ascending: {result[1]:.2f}s")
+    results["countries_cloud_cover_asc"] = result[1]
 
     logger.info(f"Running random queries (seeded with {config.seed})")
     result = await query.search_with_random_queries(
         config=config,
     )
     logger.info(f"Random Queries (seeded with {config.seed}): {result[1]:.2f}s")
+    results["random_queries"] = result[1]
 
     repeated_item_times = 10000
     repeated_item_concurrency = 50
@@ -191,19 +200,34 @@ async def run(config: query.BenchmarkConfig) -> None:
         concurrency=repeated_item_concurrency,
     )
     logger.info(f"Repeated: {result:.2f}s")
+    results["repeated"] = result
 
-    await run_sort(config, "properties.eo:cloud_cover", "desc")
-    await run_sort(config, "properties.eo:cloud_cover", "asc")
+    result = await run_sort(config, "properties.eo:cloud_cover", "desc")
+    results["sort_cloud_cover_desc"] = result
 
-    await run_sort(config, "properties.datetime", "desc")
-    await run_sort(config, "properties.datetime", "asc")
+    result = await run_sort(config, "properties.eo:cloud_cover", "asc")
+    results["sort_cloud_cover_asc"] = result
 
-    await run_sort(config, "properties.created", "desc")
-    await run_sort(config, "properties.created", "asc")
+    result = await run_sort(config, "properties.datetime", "desc")
+    results["sort_datetime_desc"] = result
+
+    result = await run_sort(config, "properties.datetime", "asc")
+    results["sort_datetime_asc"] = result
+
+    result = await run_sort(config, "properties.created", "desc")
+    results["sort_created_desc"] = result
+
+    result = await run_sort(config, "properties.created", "asc")
+    results["sort_created_asc"] = result
+
+    return results
 
 
-async def run_sort(config: query.BenchmarkConfig, field: str, direction: str) -> None:
+async def run_sort(
+    config: query.BenchmarkConfig, field: str, direction: str
+) -> list[dict[str, float]]:
     logger.info(f"Running sort {field} {direction}")
+    results = []
     for collection in config.collections:
         result = await query.sorting(
             config=config,
@@ -216,12 +240,18 @@ async def run_sort(config: query.BenchmarkConfig, field: str, direction: str) ->
                     f"Results: sort {field} {direction} on {collection} "
                     f": {value.duration:.2f}s"
                 )
-
+                results.append(
+                    {
+                        "sort": f"{collection}_{field}_{direction}",
+                        "duration": value.duration,
+                    }
+                )
             case Failure(value):
-                logger.info(
+                logger.error(
                     f"Results: sort {field} {direction} on {collection} "
                     f": Error: {value.msg}"
                 )
+    return results
 
 
 if __name__ == "__main__":
