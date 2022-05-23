@@ -45,9 +45,7 @@ class BenchmarkConfig:
     collections: tuple[str, ...]
     concurrency: int
     seed: int
-    first_queryable: str
-    second_queryable: str
-    third_queryable: str
+    queryables: tuple[str, ...]
     num_features: Optional[int]
     num_random: int
     max_items: int
@@ -226,32 +224,25 @@ async def search_with_random_queries(
                 f"{start_datetime.isoformat()}/{end_datetime.isoformat()}"
             )
 
-            cql2_filter = {
-                "op": "and",
-                "args": [
-                    {
-                        "op": "<=",
-                        "args": [
-                            {"property": config.first_queryable},
-                            fake.random_int(min=0, max=25),
-                        ],
-                    },
-                    {
-                        "op": "<=",
-                        "args": [
-                            {"property": config.second_queryable},
-                            fake.random_int(min=0, max=25),
-                        ],
-                    },
-                    {
-                        "op": "<=",
-                        "args": [
-                            {"property": config.third_queryable},
-                            fake.random_int(min=0, max=25),
-                        ],
-                    },
-                ],
-            }
+            clauses = [
+                {
+                    "op": "<=",
+                    "args": [
+                        {"property": q},
+                        fake.random_int(min=0, max=25),
+                    ],
+                }
+                for q in config.queryables
+            ]
+
+            cql2_filter = (
+                {
+                    "op": "and",
+                    "args": clauses,
+                }
+                if len(clauses) > 0
+                else None
+            )
 
             cos.append(
                 search(

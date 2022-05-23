@@ -67,19 +67,11 @@ click_log.basic_config(logger)
 )
 @click.option("--seed", default=0, help="The seed value for random query generation")
 @click.option(
-    "--first-queryable",
-    default="cloud_cover",
-    help="Name of first queryable, ranged 0-100",
-)
-@click.option(
-    "--second-queryable",
-    default="cloud_shadow_percentage",
-    help="Name of second queryable, ranged 0-100",
-)
-@click.option(
-    "--third-queryable",
-    default="nodata_pixel_percentage",
-    help="Name of third queryable, ranged 0-100",
+    "--queryable",
+    "queryables",
+    multiple=True,
+    type=str,
+    help="Name of queryable, ranged 0-100",
 )
 @click.option(
     "--num-features",
@@ -109,9 +101,7 @@ def main(
     collections: tuple[str, ...],
     concurrency: int,
     seed: int,
-    first_queryable: str,
-    second_queryable: str,
-    third_queryable: str,
+    queryables: tuple[str, ...],
     num_features: Optional[int],
     num_random: int,
     max_items: int,
@@ -125,9 +115,7 @@ def main(
                 collections=collections,
                 concurrency=concurrency,
                 seed=seed,
-                first_queryable=first_queryable,
-                second_queryable=second_queryable,
-                third_queryable=third_queryable,
+                queryables=queryables,
                 num_features=num_features,
                 num_random=num_random,
                 max_items=max_items,
