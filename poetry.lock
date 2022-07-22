@@ -306,7 +306,7 @@ typing-extensions = "*"
 
 [[package]]
 name = "faker"
-version = "13.11.1"
+version = "13.15.1"
 description = "Faker is a Python package that generates fake data for you."
 category = "main"
 optional = false
@@ -635,8 +635,8 @@ optional = false
 python-versions = ">=3.6"
 
 [package.extras]
-dev = ["pre-commit", "tox"]
-testing = ["pytest", "pytest-benchmark"]
+testing = ["pytest-benchmark", "pytest"]
+dev = ["tox", "pre-commit"]
 
 [[package]]
 name = "pre-commit"
@@ -1023,8 +1023,8 @@ optional = false
 python-versions = ">=3.5"
 
 [package.extras]
-lint = ["flake8", "mypy", "docutils-stubs"]
 test = ["pytest"]
+lint = ["docutils-stubs", "mypy", "flake8"]
 
 [[package]]
 name = "sphinxcontrib-devhelp"
@@ -1214,7 +1214,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "96d25eb21b8fada0d51771a8a5c43f907af74730ae0cbc0bc5a35f97a8467d12"
+content-hash = "e6ff5bfd8fd87a25ac422cccb964615f31e97665e20d9c89306c72abf53f19bf"
 
 [metadata.files]
 aiodns = [
@@ -1591,8 +1591,8 @@ expression = [
     {file = "Expression-2.0.0.tar.gz", hash = "sha256:027d6a73ddb01cb3c0e16e973e85e492f0cb89fa181ef81063a1409c679cf033"},
 ]
 faker = [
-    {file = "Faker-13.11.1-py3-none-any.whl", hash = "sha256:c6ff91847d7c820afc0a74d95e824b48aab71ddfd9003f300641e42d58ae886f"},
-    {file = "Faker-13.11.1.tar.gz", hash = "sha256:cad1f69d72a68878cd67855140b6fe3e44c11628971cd838595d289c98bc45de"},
+    {file = "Faker-13.15.1-py3-none-any.whl", hash = "sha256:172e45220b7a46743f4fb58cf380adb306d5c3ab1c0b0d97062508474cec5ff8"},
+    {file = "Faker-13.15.1.tar.gz", hash = "sha256:7c3f8ee807d3916415568169a172bf0893ea9cc3371ab55e4e5f5170d2185bea"},
 ]
 filelock = [
     {file = "filelock-3.7.0-py3-none-any.whl", hash = "sha256:c7b5fdb219b398a5b28c8e4c1893ef5f98ece6a38c6ab2c22e26ec161556fed6"},
