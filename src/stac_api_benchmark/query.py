@@ -78,13 +78,13 @@ def load_geometries(filename: str, id_field: str) -> Dict[str, Dict[str, Any]]:
 
 
 def load_geojson(filename: str) -> Any:
+    src_path = importlib.resources.files(__package__) / "geojson_files" / filename  # type: ignore
     if filename.endswith(".zip"):
-        with importlib.resources.path("geojson_files", filename) as f:
-            with ZipFile(f) as zf:
-                with zf.open(zf.infolist()[0]) as fo:
-                    return json.loads(fo.read())
+        with ZipFile(str(src_path)) as zf:
+            with zf.open(zf.infolist()[0]) as fo:
+                return json.loads(fo.read())
     else:
-        return json.loads(importlib.resources.read_text("geojson_files", filename))
+        return json.loads(src_path.read_text())
 
 
 def geometries_from(
