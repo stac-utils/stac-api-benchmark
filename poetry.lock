@@ -306,7 +306,7 @@ typing-extensions = "*"
 
 [[package]]
 name = "faker"
-version = "13.11.1"
+version = "14.2.0"
 description = "Faker is a Python package that generates fake data for you."
 category = "main"
 optional = false
@@ -1592,8 +1592,8 @@ expression = [
     {file = "Expression-2.0.0.tar.gz", hash = "sha256:027d6a73ddb01cb3c0e16e973e85e492f0cb89fa181ef81063a1409c679cf033"},
 ]
 faker = [
-    {file = "Faker-13.11.1-py3-none-any.whl", hash = "sha256:c6ff91847d7c820afc0a74d95e824b48aab71ddfd9003f300641e42d58ae886f"},
-    {file = "Faker-13.11.1.tar.gz", hash = "sha256:cad1f69d72a68878cd67855140b6fe3e44c11628971cd838595d289c98bc45de"},
+    {file = "Faker-14.2.0-py3-none-any.whl", hash = "sha256:e02c55a5b0586caaf913cc6c254b3de178e08b031c5922e590fd033ebbdbfd02"},
+    {file = "Faker-14.2.0.tar.gz", hash = "sha256:6db56e2c43a2b74250d1c332ef25fef7dc07dcb6c5fab5329dd7b4467b8ed7b9"},
 ]
 filelock = [
     {file = "filelock-3.7.0-py3-none-any.whl", hash = "sha256:c7b5fdb219b398a5b28c8e4c1893ef5f98ece6a38c6ab2c22e26ec161556fed6"},
