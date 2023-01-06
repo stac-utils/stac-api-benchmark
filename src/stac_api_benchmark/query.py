@@ -49,6 +49,7 @@ class BenchmarkConfig:
     num_features: Optional[int]
     num_random: int
     max_items: int
+    limit: int
     logger: Logger
     timeout: int
 
@@ -149,7 +150,7 @@ async def search(
         config.logger.debug(
             f"{search_id} => "
             f"collections = [{collection}], intersects = {intersects}, "
-            f"limit = 1000, max_items = {config.max_items}, "
+            f"limit = {config.limit}, max_items = {config.max_items}, "
             f"sortby = {sortby}, datetime = {datetime}, "
             f"filter = {json.dumps(cql2_filter) if cql2_filter else ''}"
         )
@@ -162,7 +163,7 @@ async def search(
                         Client.open(config.url).search(
                             collections=[collection],
                             intersects=intersects,
-                            limit=1000,
+                            limit=config.limit,
                             max_items=config.max_items,
                             sortby=sortby,
                             datetime=datetime,

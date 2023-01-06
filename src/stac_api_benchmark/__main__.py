@@ -90,6 +90,11 @@ click_log.basic_config(logger)
     help="Request this maximum number of items from the API for each query",
 )
 @click.option(
+    "--limit",
+    default=500,
+    help="Request this limit of items per page from the API for each query",
+)
+@click.option(
     "--timeout",
     default=30,
     help="Maximum duration before each search request is considered to have timed out,"
@@ -105,6 +110,7 @@ def main(
     num_features: Optional[int],
     num_random: int,
     max_items: int,
+    limit: int,
     timeout: int,
 ) -> None:
     """STAC API Benchmark."""
@@ -119,6 +125,7 @@ def main(
                 num_features=num_features,
                 num_random=num_random,
                 max_items=max_items,
+                limit=limit,
                 logger=logger,
                 timeout=timeout,
             )

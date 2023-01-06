@@ -104,6 +104,7 @@ Options:
   collection queries. Otherwise, if there are
   large numbers of results for these queries, it may take a very long to paginate through them, and this doesn't
   necessarily reflect something a user will do in practice. This defaults to 10000.
+- **--limit** - Request this maximum number of items **per page** from the API for each query
 - **--num-features** - Only query this number of features from the feature collection inputs. This is useful if you just
   want to run a quicker test with a few queries rather than the thousands in each of the features tests
 - **--num-random** - The number of random queries to run.
